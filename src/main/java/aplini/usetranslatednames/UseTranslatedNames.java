@@ -46,6 +46,8 @@ public final class UseTranslatedNames extends JavaPlugin {
 
                 // 消息长度限制
                 if(
+                        // null 检查, 在部分服务器中需要
+                        $message != null &&
                         // 字符串长度小于配置值
                         $message.length() < fromConfigInt("matcher.original-message-inspect.length") &&
                         // 字符串以此开头
