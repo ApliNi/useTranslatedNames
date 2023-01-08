@@ -22,7 +22,7 @@
   - `/usetranslatednames reload` 重新加载配置
 
 
-**部分配置**
+**配置**
 ```yaml
 # 我没有写更详细的说明, 但你应该用不到这些配置
 config-version: 0
@@ -37,8 +37,13 @@ matcher:
 
   # 用于匹配原消息中的物品名, 程序将获取第一个捕获组的结果
   regex: '\{"color":"#31b0e8","text":"([a-z0-9_]+)§f\."\}'
+
   # 将以上正则匹配到的消息替换为以下内容. 可用变量:
   #   __ItemName__        = 正则匹配到的实体/物品/方块名
+  #   __ItemType_show__   = 提供给 JSON hoverEvent 使用的物品类型 show_entity, show_item(block)
   #   __TranslatedName__  = 转换后用于翻译的名称 "entity.minecraft.allay"
-  replace-to: '{"color":"#31b0e8","extra":[{"translate":"__TranslatedName__"},{"text":" §8__ItemName__"}],"text":""}'
+
+  # 这条默认配置支持鼠标悬停显示实体/物品名称(暂时使用文本实现), 点击自动复制__ItemName__
+  replace-to: '{"color":"#31b0e8","hoverEvent":{"action":"show_text","contents":{"extra":[{"translate":"__TranslatedName__"},{"text":" §o§7点击复制§r"},{"text":"\n§8minecraft:__ItemName__"}],"text":""}},"clickEvent":{"action":"copy_to_clipboard","value":"__ItemName__"},"extra":[{"translate":"__TranslatedName__"},{"text":" §8__ItemName__"}],"text":""}'
+
 ```
