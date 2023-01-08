@@ -1,0 +1,13 @@
+name: UseTranslatedNames
+version: '${project.version}'
+main: aplini.usetranslatednames.UseTranslatedNames
+api-version: 1.19
+author: ApliNi
+
+softdepend:
+  - ProtocolLib
+
+commands:
+  usetranslatednames:
+    description: UseTranslatedNames 插件的主命令
+    usage: /<command>
