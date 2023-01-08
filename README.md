@@ -1,6 +1,8 @@
 ## useTranslatedNames `v0.0.1`
 用于翻译 CoreProtect 插件的物品名称的插件, 当然也可以用来做其他事
 
+![](https://github.com/ApliNi/useTranslatedNames/blob/main/_img/%E6%95%88%E6%9E%9C%E5%9B%BE.png)
+
 ---
 
 本机版本: [1.19], 经过测试的版本: [1.19.2], 预计支持版本: [1.19, 1.19.1, 1.19.2, 1.19.3]. 
