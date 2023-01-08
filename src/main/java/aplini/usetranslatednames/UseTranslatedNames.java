@@ -28,6 +28,8 @@ public final class UseTranslatedNames extends JavaPlugin {
         plugin.getConfig();
         // 注册指令
         plugin.getCommand("usetranslatednames").setExecutor(new Comment());
+        // 初始化 Util
+        new Util();
 
         // 添加一个数据包监听器
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(this,
@@ -56,9 +58,11 @@ public final class UseTranslatedNames extends JavaPlugin {
                         // 0 = 整个正则, 1 = 捕获组
 
                         // 获取翻译后的json文本
+                        String[] $translated = toTranslatedName($matcher.group(1));
                         String $messageOfTranslated = fromConfig("matcher.replace-to")
                                 .replace("__ItemName__", $matcher.group(1))
-                                .replace("__TranslatedName__", toTranslatedName($matcher.group(1)));
+                                .replace("__ItemType_show__", $translated[0])
+                                .replace("__TranslatedName__", $translated[1]);
                         // 将原消息中的目标字符串替换为翻译后的
                         String $newMessage = $message.replace($matcher.group(0), $messageOfTranslated);
 
