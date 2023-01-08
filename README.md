@@ -36,7 +36,9 @@ matcher:
     prefix: '{"extra":[{"hov'
 
   # 用于匹配原消息中的物品名, 程序将获取第一个捕获组的结果
+  # 如果设置了其他语言, 则可能需要调整此配置
   regex: '\{"color":"#31b0e8","text":"([a-z0-9_]+)§f\."\}'
+  # (中文) regex: '\{"color":"#31b0e8","text":"([a-z0-9_]+)§f\。"\}'
 
   # 将以上正则匹配到的消息替换为以下内容. 可用变量:
   #   __ItemName__        = 正则匹配到的实体/物品/方块名
@@ -45,5 +47,4 @@ matcher:
 
   # 这条默认配置支持鼠标悬停显示实体/物品名称(暂时使用文本实现), 点击自动复制__ItemName__
   replace-to: '{"color":"#31b0e8","hoverEvent":{"action":"show_text","contents":{"extra":[{"translate":"__TranslatedName__"},{"text":" §o§7点击复制§r"},{"text":"\n§8minecraft:__ItemName__"}],"text":""}},"clickEvent":{"action":"copy_to_clipboard","value":"__ItemName__"},"extra":[{"translate":"__TranslatedName__"},{"text":" §8__ItemName__"}],"text":""}'
-
 ```
