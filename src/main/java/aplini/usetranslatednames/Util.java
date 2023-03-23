@@ -11,28 +11,6 @@ import java.util.Map;
 
 public class Util {
 
-    // 获取配置, 通过配置路径
-    public static String fromConfig(String path) {
-        return UseTranslatedNames.getInstance().getConfig().getString(path);
-    }
-//    public static Boolean fromConfigBoolean(String path) {
-//        return UseTranslatedNames.getInstance().getConfig().getBoolean(path);
-//    }
-    public static int fromConfigInt(String path) {
-        return UseTranslatedNames.getInstance().getConfig().getInt(path);
-    }
-    public static List<String> fromConfigList(String path) {
-        return (List<String>) UseTranslatedNames.getInstance().getConfig().getList(path);
-    }
-    public static ArrayList<String> fromConfigArrayList(String path) {
-        return (ArrayList<String>) UseTranslatedNames.getInstance().getConfig().getList(path);
-    }
-
-    // 重载配置文件
-    public static void reloadConfig() {
-        UseTranslatedNames.getInstance().reloadConfig();
-    }
-
     // 为 toTranslatedName 类生成用于查找物品的散列表
     private static final Map<String,EntityType> enumHashMap_EntityType = new HashMap<>();
     private static final Map<String,Material> enumHashMap_Material = new HashMap<>();
@@ -40,44 +18,47 @@ public class Util {
         System.out.println("开始遍历枚举类并生成散列表");
         for (EntityType value : EntityType.values()) {
             if(value.isAlive()){
-                String $name = String.valueOf(value.getKey());
-                enumHashMap_EntityType.put($name, value);
+                String name = String.valueOf(value.getKey());
+                enumHashMap_EntityType.put(name, value);
             }
         }
         for (Material value : Material.values()) {
-            String $name = String.valueOf(value.getKey());
-            enumHashMap_Material.put($name, value);
+            String name = String.valueOf(value.getKey());
+            enumHashMap_Material.put(name, value);
         }
     }
 
     // 将实体/物品/方块名转换为翻译使用的键
     public static String[] toTranslatedName(String itemName){
-        String[] $arr = new String[2];
+        String[] arr = new String[2];
         // String[0]    = 匹配到的类型 entity, item(包括block). 用于 JSON hoverEvent
         // String[1]    = 用于 JSON translate 的名称
 
         // 实体列表
         if(enumHashMap_EntityType.containsKey("minecraft:"+ itemName)){
-            $arr[0] = "show_entity";
-            $arr[1] = "entity.minecraft."+ itemName;
+            arr[0] = "show_entity";
+            arr[1] = "entity.minecraft."+ itemName;
         }
 
         // 物品列表
         else if(enumHashMap_Material.containsKey("minecraft:"+ itemName)){
-            $arr[0] = "show_item";
+            arr[0] = "show_item";
             // 是否为方块
             if(enumHashMap_Material.get("minecraft:"+ itemName).isBlock()){
-                $arr[1] = "block.minecraft."+ itemName;
+                arr[1] = "block.minecraft."+ itemName;
             }else{
-                $arr[1] = "item.minecraft."+ itemName;
+                arr[1] = "item.minecraft."+ itemName;
             }
         }else{
             // 找不到, 输出空气
-            $arr[0] = "show_item";
-            $arr[1] = "block.minecraft.air";
+            arr[0] = "show_item";
+            arr[1] = "block.minecraft.air";
         }
 
-        return $arr;
+        return arr;
     }
 
 }
+
+
+
