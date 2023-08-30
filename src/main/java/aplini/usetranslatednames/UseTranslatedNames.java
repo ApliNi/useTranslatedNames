@@ -59,9 +59,10 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                     getLogger().info("[调试] 监听到的JSON消息: "+ message);
                 }
 
-                // 列表
+                // 遍历替换配置
                 for(Map<?, ?> list : plugin.getConfig().getMapList("list")){
-                    // 限制
+
+                    // 正则优化限制, 消息长度和前缀匹配时才运行之后的代码
                     if(message.length() < (Integer.parseInt(list.get("inspect-length").toString())) &&
                             message.startsWith(list.get("inspect-prefix").toString())){
 
@@ -71,14 +72,24 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                             // matcher.group(0)
                             // 0 = 整个正则, 1 = 捕获组
 
+                            String newMessage;
+
+                            // 是否使用正则变量
+                            if(Boolean.parseBoolean(list.get("use-regex-var").toString())){
+                                newMessage = message.replaceAll(list.get("replace-regex").toString(), list.get("replace-to").toString());
+                            }else{
+                                newMessage = list.get("replace-to").toString();
+                            }
+
                             // 获取翻译后的json文本
                             String[] translated = toTranslatedName(matcher.group(1));
-                            String messageOfTranslated = list.get("replace-to").toString()
+                            newMessage = newMessage
                                     .replace("__ItemName__", matcher.group(1))
                                     .replace("__ItemType_show__", translated[0])
                                     .replace("__TranslatedName__", translated[1]);
+
                             // 将原消息中的目标字符串替换为翻译后的
-                            String newMessage = message.replace(matcher.group(0), messageOfTranslated);
+                            newMessage = message.replace(matcher.group(0), newMessage);
 
                             // 取消发送原消息, 发送处理后的消息
                             event.setCancelled(true);
