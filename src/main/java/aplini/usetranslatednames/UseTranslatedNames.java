@@ -75,7 +75,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                             String newMessage;
 
                             // 是否使用正则变量
-                            if(Boolean.parseBoolean(list.get("use-regex-var").toString())){
+                            if(Objects.equals(list.get("use-regex-var").toString(), "true")){
                                 newMessage = message.replaceAll(list.get("replace-regex").toString(), list.get("replace-to").toString());
                             }else{
                                 newMessage = list.get("replace-to").toString();

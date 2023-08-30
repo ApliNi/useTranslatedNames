@@ -19,7 +19,7 @@
 config-version: 1
 
 list:
-    # 检查消息长度是否小于此值
+  # 检查消息长度是否小于此值
   - inspect-length: 320
     # 检查消息是否以此字符串开头
     inspect-prefix: '{"extra":[{"hov'
@@ -32,7 +32,7 @@ list:
     #   __ItemType_show__   = 提供给 JSON hoverEvent 使用的物品类型 show_entity, show_item(block)
     replace-to: '{"color":"#31b0e8","hoverEvent":{"action":"show_text","contents":{"extra":[{"translate":"__TranslatedName__"},{"text":" §o§7点击复制§r"},{"text":"\n§8minecraft:__ItemName__"}],"text":""}},"clickEvent":{"action":"copy_to_clipboard","value":"__ItemName__"},"extra":[{"translate":"__TranslatedName__"},{"text":" §8__ItemName__"}],"text":""}'
     # 是否启用正则变量 $1...
-    use-regex-variable: false
+    use-regex-var: 'false'
 
 ```
 
