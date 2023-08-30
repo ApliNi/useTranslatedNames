@@ -1,7 +1,9 @@
-## useTranslatedNames `v0.1.1`
+## useTranslatedNames `v0.2`
 内置获取翻译名功能的JSON字符串替换插件, 主要用于翻译 CoreProtect 插件的消息
 
 ![](https://github.com/ApliNi/useTranslatedNames/blob/main/_img/%E6%95%88%E6%9E%9C%E5%9B%BE.png)
+
+下载: https://modrinth.com/plugin/usetranslatednames
 
 ---
 
