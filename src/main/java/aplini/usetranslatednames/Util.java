@@ -11,20 +11,21 @@ import java.util.Map;
 
 public class Util {
 
-    // 为 toTranslatedName 类生成用于查找物品的散列表
-    private static final Map<String,EntityType> enumHashMap_EntityType = new HashMap<>();
-    private static final Map<String,Material> enumHashMap_Material = new HashMap<>();
+    // 遍历所有实体和物品
+    private static final Map<String,EntityType> enumEntity = new HashMap<>();
+    private static final Map<String,Material> enumBlock = new HashMap<>();
+
     static {
-        System.out.println("开始遍历枚举类并生成散列表");
+        System.out.println("加载物品列表...");
         for (EntityType value : EntityType.values()) {
             if(value.isAlive()){
-                String name = String.valueOf(value.getKey());
-                enumHashMap_EntityType.put(name, value);
+                enumEntity.put(String.valueOf(value.getKey()), value);
             }
         }
         for (Material value : Material.values()) {
-            String name = String.valueOf(value.getKey());
-            enumHashMap_Material.put(name, value);
+            if(value.isBlock()){
+                enumBlock.put(String.valueOf(value.getKey()), value);
+            }
         }
     }
 
@@ -35,24 +36,22 @@ public class Util {
         // String[1]    = 用于 JSON translate 的名称
 
         // 实体列表
-        if(enumHashMap_EntityType.containsKey("minecraft:"+ itemName)){
+        if(enumEntity.containsKey("minecraft:"+ itemName)){
             arr[0] = "show_entity";
             arr[1] = "entity.minecraft."+ itemName;
         }
 
-        // 物品列表
-        else if(enumHashMap_Material.containsKey("minecraft:"+ itemName)){
+        // 方块列表
+        else if(enumBlock.containsKey("minecraft:"+ itemName)){
             arr[0] = "show_item";
-            // 是否为方块
-            if(enumHashMap_Material.get("minecraft:"+ itemName).isBlock()){
-                arr[1] = "block.minecraft."+ itemName;
-            }else{
-                arr[1] = "item.minecraft."+ itemName;
-            }
-        }else{
+            arr[1] = "block.minecraft."+ itemName;
+        }
+
+        // 物品列表
+        else{
             // 找不到, 输出空气
             arr[0] = "show_item";
-            arr[1] = "block.minecraft.air";
+            arr[1] = "item.minecraft."+ itemName;
         }
 
         return arr;
