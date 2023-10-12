@@ -32,14 +32,11 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     @Override
     public void onEnable() {
         plugin = this;
-        // 保存默认配置
         plugin.saveDefaultConfig();
-        // 加载配置
         plugin.getConfig();
+        Util.load(plugin);
         // 注册指令
         Objects.requireNonNull(plugin.getCommand("usetranslatednames")).setExecutor(this);
-        // 初始化 Util
-        new Util();
 
 
         // 添加一个数据包监听器
@@ -72,18 +69,9 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                             // matcher.group(0)
                             // 0 = 整个正则, 1 = 捕获组
 
-                            String newMessage;
-
-                            // 是否使用正则变量
-                            if(Objects.equals(list.get("use-regex-var").toString(), "true")){
-                                newMessage = message.replaceAll(list.get("replace-regex").toString(), list.get("replace-to").toString());
-                            }else{
-                                newMessage = list.get("replace-to").toString();
-                            }
-
                             // 获取翻译后的json文本
                             String[] translated = toTranslatedName(matcher.group(1));
-                            newMessage = newMessage
+                            String newMessage = message
                                     .replace("__ItemName__", matcher.group(1))
                                     .replace("__ItemType_show__", translated[0])
                                     .replace("__TranslatedName__", translated[1]);
@@ -103,7 +91,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             }
         });
 
-        System.out.println("UseTranslatedNames 已启动");
+        getLogger().info("UseTranslatedNames 已启动");
     }
 
     // 执行指令
@@ -147,7 +135,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
     // 指令补全
     @Override
-    public List<String> onTabComplete(CommandSender sendermm, Command command, String label, String[] args) {
+    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if(args.length == 1){
             List<String> list = new ArrayList<>();
             list.add("reload"); // 重载配置
@@ -162,7 +150,5 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     public void onDisable() {
         // 注销插件的所有监听器
         ProtocolLibrary.getProtocolManager().removePacketListeners(plugin);
-
-        System.out.println("UseTranslatedNames 已关闭");
     }
 }

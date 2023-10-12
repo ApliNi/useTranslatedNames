@@ -3,9 +3,7 @@ package aplini.usetranslatednames;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -15,8 +13,8 @@ public class Util {
     private static final Map<String,EntityType> enumEntity = new HashMap<>();
     private static final Map<String,Material> enumBlock = new HashMap<>();
 
-    static {
-        System.out.println("加载物品列表...");
+    static void load(UseTranslatedNames plugin) {
+        plugin.getLogger().info("加载物品列表...");
         for (EntityType value : EntityType.values()) {
             if(value.isAlive()){
                 enumEntity.put(String.valueOf(value.getKey()), value);
@@ -49,7 +47,6 @@ public class Util {
 
         // 物品列表
         else{
-            // 找不到, 输出空气
             arr[0] = "show_item";
             arr[1] = "item.minecraft."+ itemName;
         }
