@@ -31,4 +31,3 @@ list:
       "contents":{"text":"§7点击复制ID\n§8minecraft:__ItemName__"}},
       "clickEvent":{"action":"copy_to_clipboard","value":"__ItemName__"}}],"text":""}],
       "text":""}'
-
