@@ -1,7 +1,7 @@
 config-version: 1
 
 list:
-  # 翻译物品名称
+  # 翻译物品
   - inspect-length: 1024 # 检查消息长度是否小于此值
     inspect-prefix: '{"extra":[{"hov' # 检查消息是否以此字符串开头
     # 替换, 使用正则表达式匹配
@@ -15,18 +15,20 @@ list:
       {"color":"#31b0e8","extra":[
       {"translate":"__TranslatedName__"},{"text":" "},
       {"text":"§8__ItemName__","hoverEvent":{"action":"show_text",
-      "contents":{"text":"§7点击复制ID\n§8minecraft:__ItemName__"}}
+      "contents":{"text":"§7点击复制ID\n§8minecraft:__ItemName__"}},
       "clickEvent":{"action":"copy_to_clipboard","value":"__ItemName__"}}],
       "text":""}
 
-#  # 翻译 "此位置没有记录"
-#  - inspect-length: 140
-#    inspect-prefix: '{"extra":[{"te'
-#    replace-regex: '\{"color"\:"#31b0e8"\,"text"\:"CoreProtect §f- §7此位置没有记录\: §o([a-z0-9_]+)"\}'
-#    replace-to: >
-#      {"extra":[{"text":""},{"color":"#31b0e8","text":"CoreProtect §f- §7此位置没有记录: "},
-#      {"color":"#31b0e8","extra":[{"translate":"__TranslatedName__"},{"text":" "},
-#      {"text":"§8__ItemName__","hoverEvent":{"action":"show_text",
-#      "contents":{"text":"§7点击复制ID\n§8minecraft:__ItemName__"}},
-#      "clickEvent":{"action":"copy_to_clipboard","value":"__ItemName__"}}],"text":""}],
-#      "text":""}'
+
+  # 替换 此位置没有记录
+  - inspect-length: 140
+    inspect-prefix: '{"extra":[{"te'
+    replace-regex: '\{"color"\:"#31b0e8"\,"text"\:"CoreProtect §f- §7此位置没有记录\: §o([a-z0-9_]+)"\}'
+    replace-to: >
+      {"extra":[{"text":""},{"color":"#31b0e8","text":"CoreProtect §f- §7此位置没有记录: "},
+      {"color":"#31b0e8","extra":[{"translate":"__TranslatedName__"},{"text":" "},
+      {"text":"§8__ItemName__","hoverEvent":{"action":"show_text",
+      "contents":{"text":"§7点击复制ID\n§8minecraft:__ItemName__"}},
+      "clickEvent":{"action":"copy_to_clipboard","value":"__ItemName__"}}],"text":""}],
+      "text":""}'
+
