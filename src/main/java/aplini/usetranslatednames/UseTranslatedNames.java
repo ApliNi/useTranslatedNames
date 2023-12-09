@@ -71,7 +71,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
                             // 获取翻译后的json文本
                             String[] translated = toTranslatedName(matcher.group(1));
-                            String newMessage = message
+                            String newMessage = list.get("replace-to").toString()
                                     .replace("__ItemName__", matcher.group(1))
                                     .replace("__ItemType_show__", translated[0])
                                     .replace("__TranslatedName__", translated[1]);
