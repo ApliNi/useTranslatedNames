@@ -4,45 +4,40 @@ list:
 
   # 翻译实体名 :: 24.03/m 前 #**苦力怕** 破坏 草方块
   - inspect-length: 1024
-    inspect-prefix: '{"extra":[{"hov'
-    replace-regex: '\{"color":"#31b0e8","text":"#([a-z0-9_]+)§f'
+    replace-regex: '\{"text":"#([a-z0-9_]+)§f([^"]+)","color":"#31B0E8"\}'
     replace-to: >-
-      {"color":"#31b0e8","text":"#"},
-      {"color":"#31b0e8","translate":"__TranslatedName__"},
-      {"text":"
+      {"text":"§8#"},
+      {"translate":"_$1:TranslatedName_","color":"#31b0e8"},
+      {"text":"§f_$2_","color":"#31B0E8"}
 
 
   # 翻译物品 :: 24.03/m 前 #苦力怕 破坏 **草方块**
   - inspect-length: 1024 # 检查消息长度是否小于此值
-    inspect-prefix: '{"extra":[{"hov' # 检查消息是否以此字符串开头
     # 替换, 使用正则表达式匹配
-    replace-regex: '\{"color":"#31b0e8","text":"([a-z0-9_]+)(?:§f.{0,3})?"\}'
-    # 替换为
-    # {"translate":"__TranslatedName__"}
-    #   __ItemName__        = 正则匹配到的实体/物品/方块名
-    #   __TranslatedName__  = 转换后用于翻译的名称 "entity.minecraft.allay"
-    #   __ItemType_show__   = 提供给 JSON hoverEvent 使用的物品类型 show_entity, show_item(block)
+    replace-regex: '\{"text":"([a-z0-9_]+)(?:§f.{0,3})?","color":"#31B0E8"\}'
+    # _$1_    = 正则匹配到的变量 1, 也可以是 `_$2_` (第 2 个变量)...
+    # _$1:ItemType_   = 将 _$1_ 用于获取物品类型, 提供给 JSON hoverEvent 使用的物品类型 show_entity, show_item(block)
+    # _$1:TranslatedName_  = 将 _$1_ 用于名称翻译, 返回与语言路径对应的 KEY, 例如 `entity.minecraft.allay`
     replace-to: >-
-      {"color":"#31b0e8","extra":[
-        {"translate":"__TranslatedName__"},
-        {"text":" §8__ItemName__",
+      {"extra":[
+        {"translate":"_$1:TranslatedName_"},
+        {"text":" §8_$1_",
           "hoverEvent":{
             "action":"show_text",
-            "contents":{"text":"§7点击复制ID\n§8minecraft:__ItemName__"}
+            "contents":{"text":"§7点击复制ID\n§8minecraft:_$1_"}
           },
-        "clickEvent":{"action":"copy_to_clipboard","value":"__ItemName__"}
+        "clickEvent":{"action":"copy_to_clipboard","value":"_$1_"}
         }
-      ],"text":""}
+      ],"color":"#31b0e8","text":""}
 
 
-  # 替换和翻译 此位置没有记录
-#  - inspect-length: 140
-#    inspect-prefix: '{"extra":[{"te'
-#    replace-regex: '\{"color"\:"#31b0e8"\,"text"\:"CoreProtect §f- §7此位置没有记录\: §o([a-z0-9_]+)"\}'
+#  # 替换和翻译 此位置没有记录
+#  - inspect-length: 170
+#    replace-regex: '\{"text":"","extra":\["",\{"text":"CoreProtect §f- §7此位置没有记录: §o([a-z0-9_]+)","color":"#31B0E8"\}\]\}'
 #    replace-to: >
-#      {"extra":[{"text":""},{"color":"#31b0e8","text":"CoreProtect §f- §7此位置没有记录: "},
-#      {"color":"#31b0e8","extra":[{"translate":"__TranslatedName__"},{"text":" "},
-#      {"text":"§8__ItemName__","hoverEvent":{"action":"show_text",
-#      "contents":{"text":"§7点击复制ID\n§8minecraft:__ItemName__"}},
-#      "clickEvent":{"action":"copy_to_clipboard","value":"__ItemName__"}}],"text":""}],
+#      {"extra":[{"color":"#31b0e8","text":"CoreProtect §f- §7此位置没有记录: "},
+#      {"color":"#31b0e8","extra":[{"translate":"_$1:TranslatedName_"},{"text":" "},
+#      {"text":"§8_$1_","hoverEvent":{"action":"show_text",
+#      "contents":{"text":"§7点击复制ID\n§8minecraft:_$1_"}},
+#      "clickEvent":{"action":"copy_to_clipboard","value":"_$1_"}}],"text":""}],
 #      "text":""}

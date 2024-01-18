@@ -4,14 +4,12 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
@@ -21,7 +19,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static aplini.usetranslatednames.Util.*;
+import static aplini.usetranslatednames.Util.toTranslatedName;
 
 
 public final class UseTranslatedNames extends JavaPlugin implements CommandExecutor, TabExecutor {
@@ -47,45 +45,53 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             @Override
             public void onPacketSending(PacketEvent event){
                 // 获取消息 JSON
-                PacketContainer packet = event.getPacket();
-                String message = packet.getStrings().read(0);
-
-                if(message == null) return;
+                String json = event.getPacket().getChatComponents().read(0).getJson();
+                if(json == null) return;
 
                 if(_debug){
-                    getLogger().info("[调试] 监听到的JSON消息: "+ message);
+                    getLogger().info("[调试] 监听到的JSON消息: "+ json);
                 }
 
                 // 遍历替换配置
                 for(Map<?, ?> list : plugin.getConfig().getMapList("list")){
 
-                    // 正则优化限制, 消息长度和前缀匹配时才运行之后的代码
-                    if(message.length() < (Integer.parseInt(list.get("inspect-length").toString())) &&
-                            message.startsWith(list.get("inspect-prefix").toString())){
+                    // 防止处理过长的消息
+                    if(json.length() > ((int) list.get("inspect-length"))){
+                        continue;
+                    }
 
-                        // 匹配
-                        Matcher matcher = Pattern.compile(list.get("replace-regex").toString()).matcher(message);
-                        if(matcher.find()){
-                            // matcher.group(0)
-                            // 0 = 整个正则, 1 = 捕获组
+                    // 匹配
+                    Matcher matcher = Pattern.compile(list.get("replace-regex").toString()).matcher(json);
+                    while(matcher.find()){
+                        // 取消发送消息
+                        event.setCancelled(true);
 
-                            // 获取翻译后的json文本
-                            String[] translated = toTranslatedName(matcher.group(1));
-                            String newMessage = list.get("replace-to").toString()
-                                    .replace("__ItemName__", matcher.group(1))
-                                    .replace("__ItemType_show__", translated[0])
-                                    .replace("__TranslatedName__", translated[1]);
+                        // 匹配到的完整字符串
+                        String oldJson = matcher.group(0);
+                        String jsonFrame = list.get("replace-to").toString();
 
-                            // 将原消息中的目标字符串替换为翻译后的
-                            newMessage = message.replace(matcher.group(0), newMessage);
-
-                            // 取消发送原消息, 发送处理后的消息
-                            event.setCancelled(true);
-                            Player player = event.getPlayer();
-                            player.spigot().sendMessage(ComponentSerializer.parse(newMessage));
-
-                            break;
+                        // 处理翻译变量 _$1:ItemType_, _$1:TranslatedName_
+                        Matcher matcher2 = Pattern.compile("_\\$(\\d+):(TranslatedName|ItemType)_").matcher(jsonFrame);
+                        while(matcher2.find()){
+                            String var = matcher.group(Integer.parseInt(matcher2.group(1)));
+                            String[] translated = toTranslatedName(var);
+                            if(Objects.equals(matcher2.group(2), "TranslatedName")){
+                                jsonFrame = jsonFrame.replace(matcher2.group(), translated[1]);
+                            }else{
+                                jsonFrame = jsonFrame.replace(matcher2.group(), translated[0]);
+                            }
                         }
+
+                        // 处理正则变量 _$1_
+                        int matcherLength = matcher.groupCount();
+                        for(int i = 1; i <= matcherLength; i++){
+                            jsonFrame = jsonFrame.replace("_$"+ i +"_", matcher.group(i));
+                        }
+
+
+                        // 替换原文本中的旧 JSON, 重新发送给玩家
+                        jsonFrame = json.replace(oldJson, jsonFrame);
+                        event.getPlayer().spigot().sendMessage(ComponentSerializer.parse(jsonFrame));
                     }
                 }
             }
@@ -97,10 +103,6 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     // 执行指令
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // sender = 发送命令的对象, 比如玩家/ 控制台/ 命令方块...
-        // command = 命令的内容
-        // label = 主命令, 不包括命令后面的参数
-        // args = 命令参数数组, 不保留主命令字符串
 
         // 判断执行了此插件的哪个指令
         if(label.equals("usetranslatednames")){
