@@ -10,6 +10,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
@@ -100,6 +102,21 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         getLogger().info("UseTranslatedNames 已启动");
     }
 
+    // 检查配置版本
+    public void CheckConfigVersion(){
+        if(getConfig().getInt("config-version") != 2){
+            getLogger().warning("配置版本不匹配, 可能无法正常运行, 请更新或重建配置");
+            getLogger().warning("配置版本不匹配, 可能无法正常运行, 请更新或重建配置");
+            getLogger().warning("配置版本不匹配, 可能无法正常运行, 请更新或重建配置");
+        }
+    }
+
+    @EventHandler // 服务器启动完成事件
+    public void onServerLoad(ServerLoadEvent event) {
+        // 检查配置版本
+        CheckConfigVersion();
+    }
+
     // 执行指令
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -120,6 +137,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             else if(args[0].equals("reload")){
                 plugin.reloadConfig();
                 sender.sendMessage("UseTranslatedNames 已完成重载");
+                CheckConfigVersion();
                 return true;
             }
 
