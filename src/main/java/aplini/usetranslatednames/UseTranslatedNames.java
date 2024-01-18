@@ -11,6 +11,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -24,7 +25,7 @@ import java.util.regex.Pattern;
 import static aplini.usetranslatednames.Util.toTranslatedName;
 
 
-public final class UseTranslatedNames extends JavaPlugin implements CommandExecutor, TabExecutor {
+public final class UseTranslatedNames extends JavaPlugin implements CommandExecutor, TabExecutor, Listener {
     private static UseTranslatedNames plugin;
     // 调试模式
     private boolean _debug = false;
