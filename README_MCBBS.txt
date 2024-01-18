@@ -1,3 +1,9 @@
+[postbg]bg5.png[/postbg][markdown]
+
+https://github.com/ApliNi/useTranslatedNames
+
+---
+
 ## useTranslatedNames
 内置获取翻译名功能的JSON字符串替换插件, 可用于翻译 CoreProtect 等插件的消息
 
@@ -12,7 +18,7 @@
   - `/usetranslatednames reload` 重新加载配置
   - `/usetranslatednames debug` 调试模式
 
-插件会根据配置捕获对应的服务端消息, 然后替换其中的物品名称并重新发送消息. 详细信息参考"配置"部分. 
+插件会根据配置捕获对应的服务端消息, 然后替换其中的物品名称并重新发送消息. 详细信息参考"配置"部分.
 
 
 ### 配置
@@ -51,3 +57,12 @@ list:
 
 ### 依赖
 - ProtocolLib 5.2.0
+
+
+---
+
+### MCBBS
+本插件所用所有代码均为原创,不存在借用/抄袭等行为
+本插件为非盈利性插件，免费发布，严禁销售和转卖
+
+[/markdown]

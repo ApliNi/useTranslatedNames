@@ -36,6 +36,12 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         plugin.saveDefaultConfig();
         plugin.getConfig();
         Util.load(plugin);
+
+        // bStats
+        if(getConfig().getBoolean("bStats", true)){
+            new Metrics(this, 20766);
+        }
+
         // 注册指令
         Objects.requireNonNull(plugin.getCommand("usetranslatednames")).setExecutor(this);
 
