@@ -76,8 +76,11 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                         event.setCancelled(true);
 
                         // 匹配到的完整字符串
-                        String oldJson = matcher.group(0);
                         String jsonFrame = list.get("replace-to").toString();
+                        if(jsonFrame.isEmpty()){
+                            continue;
+                        }
+                        String oldJson = matcher.group(0);
 
                         // 处理翻译变量 _$1:ItemType_, _$1:TranslatedName_
                         Matcher matcher2 = Pattern.compile("_\\$(\\d+):(TranslatedName|ItemType)_").matcher(jsonFrame);

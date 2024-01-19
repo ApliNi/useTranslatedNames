@@ -28,6 +28,7 @@ list:
         "clickEvent":{"action":"copy_to_clipboard","value":"_$1_"}
         }
       ],"color":"#31b0e8","text":""}
+    # 如果 replace-to: '', 则会取消发送这条消息
 
 
 #  # 替换和翻译 此位置没有记录
