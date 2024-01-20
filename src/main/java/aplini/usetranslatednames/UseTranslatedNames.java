@@ -17,10 +17,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,7 +25,6 @@ import static aplini.usetranslatednames.Util.toTranslatedName;
 
 
 public final class UseTranslatedNames extends JavaPlugin implements CommandExecutor, TabExecutor, Listener {
-    private static UseTranslatedNames plugin;
     // 调试模式
     private boolean _debug = false;
     // 配置文件
@@ -36,11 +32,10 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
     @Override
     public void onEnable() {
-        plugin = this;
-        plugin.saveDefaultConfig();
-        plugin.getConfig();
+        saveDefaultConfig();
+        getConfig();
         loadConfig();
-        Util.load(plugin);
+        Util.load(this);
 
         // bStats
         if(getConfig().getBoolean("bStats", true)){
@@ -48,7 +43,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         }
 
         // 注册指令
-        Objects.requireNonNull(plugin.getCommand("utn")).setExecutor(this);
+        Objects.requireNonNull(getCommand("utn")).setExecutor(this);
 
 
         // 添加一个数据包监听器
@@ -64,13 +59,16 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
                 if(json == null) return;
 
+                // 处理重复的消息
+
                 if(_debug){
                     getLogger().info("[DEBUG] [Player: "+ event.getPlayer().getName() +"] [Length: "+ json.length() +"]: -------");
-                    getLogger().info("  - "+ json);
+                    getLogger().info("  - [get]: "+ json);
                 }
 
                 // 遍历替换配置
                 for(Cli cli : list){
+                    boolean ok = false;
 
                     // 防止处理过长的消息
                     if(json.length() > cli.inspectLength){
@@ -113,6 +111,10 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
                         // 替换原文本中的旧 JSON, 重新发送给玩家
                         jsonFrame = json.replace(oldJson, jsonFrame);
+                        jsonFrame = jsonFrame.replaceAll("^\\{", "{\"utn\":\"utn\",");
+                        if(_debug){
+                            getLogger().info("  - [set]: "+ jsonFrame);
+                        }
                         Player player = event.getPlayer();
                         // 处理显示位置
                         if(cli.displayPlace.equals("ACTION_BAR")){
@@ -120,7 +122,9 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                         } else {
                             player.spigot().sendMessage(ComponentSerializer.parse(jsonFrame));
                         }
+                        ok = true;
                     }
+                    if(ok){break;}
                 }
             }
         });
@@ -130,7 +134,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
     public void loadConfig(){
         list = new ArrayList<>();
-        for(Map<?, ?> li : plugin.getConfig().getMapList("list")){
+        for(Map<?, ?> li : getConfig().getMapList("list")){
             list.add(new Cli().setConfig(li));
         }
     }
@@ -165,6 +169,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
         // 重载配置
         else if(args[0].equals("reload")){
+            reloadConfig();
             loadConfig();
             sender.sendMessage("UseTranslatedNames 已完成重载");
             CheckConfigVersion();
@@ -192,12 +197,5 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             return list;
         }
         return null;
-    }
-
-
-    @Override
-    public void onDisable() {
-        // 注销插件的所有监听器
-        ProtocolLibrary.getProtocolManager().removePacketListeners(plugin);
     }
 }
