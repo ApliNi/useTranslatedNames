@@ -2,6 +2,7 @@ name: UseTranslatedNames
 version: '${project.version}'
 main: aplini.usetranslatednames.UseTranslatedNames
 api-version: 1.19
+prefix: UTN
 author: ApliNi
 
 softdepend:

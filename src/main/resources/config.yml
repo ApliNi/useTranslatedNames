@@ -1,23 +1,19 @@
-config-version: 2
+configVersion: 3
 list:
 
   # 翻译实体名 :: 24.03/m 前 #**苦力怕** 破坏 草方块
-  - inspect-length: 1024
-    replace-regex: '\{"text":"#([a-z0-9_]+)§f([^"]+)","color":"#31B0E8"\}'
-    replace-to: >-
+  - inspectLength: 1024
+    get: '\{"text":"#([a-z0-9_]+)§f([^"]+)","color":"#31B0E8"\}'
+    set: >-
       {"text":"§8#"},
       {"translate":"_$1:TranslatedName_","color":"#31b0e8"},
       {"text":"§f_$2_","color":"#31B0E8"}
 
 
   # 翻译物品 :: 24.03/m 前 #苦力怕 破坏 **草方块**
-  - inspect-length: 1024 # 检查消息长度是否小于此值
-    # 替换, 使用正则表达式匹配
-    replace-regex: '\{"text":"([a-z0-9_]+)(?:§f.{0,3})?","color":"#31B0E8"\}'
-    # _$1_    = 正则匹配到的变量 1, 也可以是 `_$2_` (第 2 个变量)...
-    # _$1:ItemType_   = 将 _$1_ 用于获取物品类型, 提供给 JSON hoverEvent 使用的物品类型 show_entity, show_item(block)
-    # _$1:TranslatedName_  = 将 _$1_ 用于名称翻译, 返回与语言路径对应的 KEY, 例如 `entity.minecraft.allay`
-    replace-to: >-
+  - inspectLength: 1024
+    get: '\{"text":"([a-z0-9_]+)(?:§f.{0,3})?","color":"#31B0E8"\}'
+    set: >-
       {"extra":[
         {"translate":"_$1:TranslatedName_"},
         {"text":" §8_$1_",
@@ -28,16 +24,16 @@ list:
         "clickEvent":{"action":"copy_to_clipboard","value":"_$1_"}
         }
       ],"color":"#31b0e8","text":""}
-    # 如果 replace-to: '', 则会取消发送这条消息
 
 
-#  # 替换和翻译 此位置没有记录
-#  - inspect-length: 170
-#    replace-regex: '\{"text":"","extra":\["",\{"text":"CoreProtect §f- §7此位置没有记录: §o([a-z0-9_]+)","color":"#31B0E8"\}\]\}'
-#    replace-to: >
-#      {"extra":[{"color":"#31b0e8","text":"CoreProtect §f- §7此位置没有记录: "},
-#      {"color":"#31b0e8","extra":[{"translate":"_$1:TranslatedName_"},{"text":" "},
-#      {"text":"§8_$1_","hoverEvent":{"action":"show_text",
-#      "contents":{"text":"§7点击复制ID\n§8minecraft:_$1_"}},
-#      "clickEvent":{"action":"copy_to_clipboard","value":"_$1_"}}],"text":""}],
-#      "text":""}
+  # 所有可用配置
+  - inspectLength: 1024 # 检查消息长度是否小于此值
+    # 使用正则表达式匹配
+    get: '^\{"text":"","extra":\["Missing required argument (\d)"\]\}$'
+    # _$1_    = 正则匹配到的变量 1, 也可以是 `_$2_` (第 2 个变量)...
+    # _$1:ItemType_   = 将 _$1_ 用于获取物品类型, 提供给 JSON hoverEvent 使用的物品类型 show_entity, show_item(block)
+    # _$1:TranslatedName_  = 将 _$1_ 用于名称翻译, 返回与语言路径对应的 KEY, 例如 `entity.minecraft.allay`
+    set: '{"text":"§bIpacEL §f> §b此指令需要至少 §a_$1_ §b个参数"}'
+    # set: >- # YAML 语法中使用 `>-` 可以编写换行的文本, 效果如上
+    # set: '' # 如果为空, 则取消发送这条消息
+    displayPlace: 'ACTION_BAR' # 将消息显示在操作栏 (物品栏上面)

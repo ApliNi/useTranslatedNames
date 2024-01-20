@@ -54,6 +54,14 @@ public class Util {
         return arr;
     }
 
+    // 如果 in1 为空则选择 in2, 否则选择 in1
+    public static Object SEL(Object in1, Object in2) {
+        if(in1 == null){
+            return in2;
+        }
+        return in1;
+    }
+
 }
 
 

@@ -5,11 +5,13 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
+import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
@@ -29,12 +31,15 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     private static UseTranslatedNames plugin;
     // 调试模式
     private boolean _debug = false;
+    // 配置文件
+    List<Cli> list = new ArrayList<>();
 
     @Override
     public void onEnable() {
         plugin = this;
         plugin.saveDefaultConfig();
         plugin.getConfig();
+        loadConfig();
         Util.load(plugin);
 
         // bStats
@@ -54,30 +59,32 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             @Override
             public void onPacketSending(PacketEvent event){
                 // 获取消息 JSON
-                String json = event.getPacket().getChatComponents().read(0).getJson();
+                // String json = event.getPacket().getStrings().read(0); // 1.20.4 -
+                String json = event.getPacket().getChatComponents().read(0).getJson(); // 1.20.4 +
+
                 if(json == null) return;
 
                 if(_debug){
-                    getLogger().info("[调试] 监听到的JSON消息: "+ json);
+                    getLogger().info("[---DEBUG---]: "+ json);
                 }
 
                 // 遍历替换配置
-                for(Map<?, ?> list : plugin.getConfig().getMapList("list")){
+                for(Cli cli : list){
 
                     // 防止处理过长的消息
-                    if(json.length() > ((int) list.get("inspect-length"))){
+                    if(json.length() > cli.inspectLength){
                         continue;
                     }
 
                     // 匹配
-                    Matcher matcher = Pattern.compile(list.get("replace-regex").toString()).matcher(json);
+                    Matcher matcher = Pattern.compile(cli.get).matcher(json);
                     while(matcher.find()){
                         // 取消发送消息
                         event.setCancelled(true);
 
                         // 匹配到的完整字符串
-                        String jsonFrame = list.get("replace-to").toString();
-                        if(jsonFrame.isEmpty()){
+                        String jsonFrame = cli.set;
+                        if(jsonFrame.isEmpty()){ // 如果为空则仅取消发送它
                             continue;
                         }
                         String oldJson = matcher.group(0);
@@ -86,24 +93,32 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                         Matcher matcher2 = Pattern.compile("_\\$(\\d+):(TranslatedName|ItemType)_").matcher(jsonFrame);
                         while(matcher2.find()){
                             String var = matcher.group(Integer.parseInt(matcher2.group(1)));
-                            String[] translated = toTranslatedName(var);
-                            if(Objects.equals(matcher2.group(2), "TranslatedName")){
-                                jsonFrame = jsonFrame.replace(matcher2.group(), translated[1]);
+                            if(matcher2.group(2).equals("TranslatedName")){
+                                jsonFrame = jsonFrame.replace(matcher2.group(), toTranslatedName(var)[1]);
                             }else{
-                                jsonFrame = jsonFrame.replace(matcher2.group(), translated[0]);
+                                jsonFrame = jsonFrame.replace(matcher2.group(), toTranslatedName(var)[0]);
                             }
                         }
 
                         // 处理正则变量 _$1_
-                        int matcherLength = matcher.groupCount();
-                        for(int i = 1; i <= matcherLength; i++){
-                            jsonFrame = jsonFrame.replace("_$"+ i +"_", matcher.group(i));
+                        Matcher matcher3 = Pattern.compile("_\\$\\d+_").matcher(jsonFrame);
+                        if(matcher3.find()){
+                            int matcherLength = matcher.groupCount();
+                            for(int i = 1; i <= matcherLength; i++){
+                                jsonFrame = jsonFrame.replace("_$" + i + "_", matcher.group(i));
+                            }
                         }
 
 
                         // 替换原文本中的旧 JSON, 重新发送给玩家
                         jsonFrame = json.replace(oldJson, jsonFrame);
-                        event.getPlayer().spigot().sendMessage(ComponentSerializer.parse(jsonFrame));
+                        Player player = event.getPlayer();
+                        // 处理显示位置
+                        if(cli.displayPlace.equals("ACTION_BAR")){
+                            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, ComponentSerializer.parse(jsonFrame));
+                        } else {
+                            player.spigot().sendMessage(ComponentSerializer.parse(jsonFrame));
+                        }
                     }
                 }
             }
@@ -112,9 +127,16 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         getLogger().info("UseTranslatedNames 已启动");
     }
 
+    public void loadConfig(){
+        list = new ArrayList<>();
+        for(Map<?, ?> li : plugin.getConfig().getMapList("list")){
+            list.add(new Cli().setConfig(li));
+        }
+    }
+
     // 检查配置版本
     public void CheckConfigVersion(){
-        if(getConfig().getInt("config-version") != 2){
+        if(getConfig().getInt("configVersion") != 3){
             getLogger().warning("配置版本不匹配, 可能无法正常运行, 请更新或重建配置");
             getLogger().warning("配置版本不匹配, 可能无法正常运行, 请更新或重建配置");
             getLogger().warning("配置版本不匹配, 可能无法正常运行, 请更新或重建配置");
@@ -145,7 +167,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
             // 重载配置
             else if(args[0].equals("reload")){
-                plugin.reloadConfig();
+                loadConfig();
                 sender.sendMessage("UseTranslatedNames 已完成重载");
                 CheckConfigVersion();
                 return true;
