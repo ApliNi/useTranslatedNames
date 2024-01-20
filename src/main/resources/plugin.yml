@@ -9,6 +9,6 @@ softdepend:
   - ProtocolLib
 
 commands:
-  usetranslatednames:
+  utn:
     description: UseTranslatedNames 插件的主命令
     usage: /<command>

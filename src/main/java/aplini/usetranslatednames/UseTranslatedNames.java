@@ -48,7 +48,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         }
 
         // 注册指令
-        Objects.requireNonNull(plugin.getCommand("usetranslatednames")).setExecutor(this);
+        Objects.requireNonNull(plugin.getCommand("utn")).setExecutor(this);
 
 
         // 添加一个数据包监听器
@@ -65,7 +65,8 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                 if(json == null) return;
 
                 if(_debug){
-                    getLogger().info("[---DEBUG---]: "+ json);
+                    getLogger().info("[DEBUG] [Player: "+ event.getPlayer().getName() +"] [Length: "+ json.length() +"]: -------");
+                    getLogger().info("  - "+ json);
                 }
 
                 // 遍历替换配置
@@ -158,10 +159,9 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             // 默认输出插件信息
             if(args.length == 0){
                 sender.sendMessage("IpacEL > UseTranslatedNames: 使用翻译名称");
-                sender.sendMessage("  插件版本: 0, 配置版本: "+ plugin.getConfig().getInt("config-version"));
                 sender.sendMessage("  指令: ");
-                sender.sendMessage("    - /usetranslatednames reload - 重载配置");
-                sender.sendMessage("    - /usetranslatednames debug - 调试模式");
+                sender.sendMessage("    - /utn reload - 重载配置");
+                sender.sendMessage("    - /utn debug - 调试模式");
                 return true;
             }
 
