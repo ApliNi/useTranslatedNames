@@ -154,31 +154,28 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
-        // 判断执行了此插件的哪个指令
-        if(label.equals("usetranslatednames")){
-            // 默认输出插件信息
-            if(args.length == 0){
-                sender.sendMessage("IpacEL > UseTranslatedNames: 使用翻译名称");
-                sender.sendMessage("  指令: ");
-                sender.sendMessage("    - /utn reload - 重载配置");
-                sender.sendMessage("    - /utn debug - 调试模式");
-                return true;
-            }
+        // 默认输出插件信息
+        if(args.length == 0){
+            sender.sendMessage("IpacEL > UseTranslatedNames: 使用翻译名称");
+            sender.sendMessage("  指令: ");
+            sender.sendMessage("    - /utn reload - 重载配置");
+            sender.sendMessage("    - /utn debug - 调试模式");
+            return true;
+        }
 
-            // 重载配置
-            else if(args[0].equals("reload")){
-                loadConfig();
-                sender.sendMessage("UseTranslatedNames 已完成重载");
-                CheckConfigVersion();
-                return true;
-            }
+        // 重载配置
+        else if(args[0].equals("reload")){
+            loadConfig();
+            sender.sendMessage("UseTranslatedNames 已完成重载");
+            CheckConfigVersion();
+            return true;
+        }
 
-            // 调试模式
-            else if(args[0].equals("debug")){
-                _debug = ! _debug;
-                sender.sendMessage("UseTranslatedNames 调试模式: "+ _debug);
-                return true;
-            }
+        // 调试模式
+        else if(args[0].equals("debug")){
+            _debug = ! _debug;
+            sender.sendMessage("UseTranslatedNames 调试模式: "+ _debug);
+            return true;
         }
 
         // 返回 false 时, 玩家将收到命令不存在的错误
