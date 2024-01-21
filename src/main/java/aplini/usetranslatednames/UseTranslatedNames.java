@@ -1,6 +1,7 @@
 package aplini.usetranslatednames;
 
 import aplini.usetranslatednames.Enum.Cli;
+import aplini.usetranslatednames.Enum.Status;
 import aplini.usetranslatednames.Enum.Word;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -21,7 +22,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static aplini.usetranslatednames.Util.SEL;
 import static aplini.usetranslatednames.Util.toTranslatedName;
@@ -36,6 +36,8 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     private HashMap<String, Word> words;
     // 配置文件
     List<Cli> list = new ArrayList<>();
+    // 记录统计信息
+    Status status = new Status();
 
     @Override
     public void onEnable() {
@@ -58,6 +60,9 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         ){
             @Override
             public void onPacketSending(PacketEvent event){
+
+                long _startTime = System.nanoTime(); // 记录运行时间
+                status.Messages ++;
 
                 Player player = event.getPlayer();
 
@@ -93,8 +98,11 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                     }
 
                     // 匹配
-                    Matcher matcher = Pattern.compile(cli.get).matcher(json);
+                    Matcher matcher = cli.regExp.matcher(json);
                     while(matcher.find()){
+
+                        status.Matches ++;
+
                         // 取消发送消息
                         event.setCancelled(true);
 
@@ -160,6 +168,8 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                     }
                     if(ok){break;}
                 }
+
+                status.TotalTime += Math.round((System.nanoTime() - _startTime) / 1_000_000.0);
             }
         });
 
@@ -170,8 +180,12 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     public long loadConfig(){
         long _startTime = System.nanoTime(); // 记录运行时间
 
-        saveResource("config.yml", false);
-        saveResource("words.yml", false);
+        if(!new File(getDataFolder(), "words.yml").exists()){
+            saveResource("words.yml", false);
+        }
+        if(!new File(getDataFolder(), "config.yml").exists()){
+            saveResource("config.yml", false);
+        }
         reloadConfig();
 
         // 检查配置版本
@@ -223,10 +237,17 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
         // 默认输出插件信息
         if(args.length == 0){
-            sender.sendMessage("IpacEL > UseTranslatedNames: 使用翻译名称");
-            sender.sendMessage("  指令: ");
-            sender.sendMessage("    - /utn reload - 重载配置");
-            sender.sendMessage("    - /utn debug - 调试模式");
+            sender.sendMessage(
+                    "\n"+
+                            "IpacEL > UseTranslatedNames: 使用翻译名称\n"+
+                            "  指令: \n"+
+                            "    - /utn reload - 重载配置\n"+
+                            "    - /utn debug  - 调试模式\n"+
+                            "  统计信息: \n"+
+                            "    - 监听消息: "+ status.Messages +"\n"+
+                            "    - 成功匹配: "+ status.Matches +"\n"+
+                            "    - 平均延迟: "+ String.format("%.2f", ((float) status.Matches / status.TotalTime)) +" ms  [累计: "+ status.TotalTime +" ms]"
+            );
             return true;
         }
 

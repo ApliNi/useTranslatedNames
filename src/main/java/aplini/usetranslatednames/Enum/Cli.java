@@ -10,6 +10,7 @@ public class Cli {
     // 必选变量
     public int inspectLength;
     public String get;
+    public Pattern regExp;
     public String set;
     // 可选变量
     public String permission;
@@ -31,6 +32,7 @@ public class Cli {
         // 必选变量
         this.inspectLength = (int) li.get("inspectLength");
         this.get = (String) li.get("get");
+        this.regExp = Pattern.compile(this.get);
         this.set = (String) li.get("set");
         // 可选变量
         this.permission = (String) SEL(li.get("permission"), "");
