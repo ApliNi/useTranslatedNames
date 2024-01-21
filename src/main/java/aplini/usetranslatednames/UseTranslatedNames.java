@@ -33,7 +33,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     // 监听器模式
     boolean listeningMode = true;
     // 词配置 Map<组名.词 or 组名.语言.词, 词配置>
-    HashMap<String, Word> words;
+    private HashMap<String, Word> words;
     // 配置文件
     List<Cli> list = new ArrayList<>();
 
@@ -106,7 +106,8 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                         }
                         String oldJson = matcher.group(0);
 
-                        // 处理翻译变量 _$1:ItemType_, _$1:TranslatedName_
+
+                        // 处理翻译变量替换 _$1:ItemType_, _$1:TranslatedName_
                         if(cli.enTransVar){
                             cli.dataTransVar.reset();
                             while(cli.dataTransVar.find()){
@@ -118,6 +119,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                                 }
                             }
                         }
+
 
                         // 处理词替换 _$1:Words:xxx_
                         if(cli.enWordReplace){
@@ -134,7 +136,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                         }
 
 
-                        // 处理正则变量 _$1_
+                        // 处理正则替换 _$1_
                         if(cli.enRegExpReplace){
                             int matcherLength = matcher.groupCount();
                             for(int i = 1; i <= matcherLength; i++){

@@ -50,4 +50,3 @@ list: # 替换列表
     set: '{"text":"§bIpacEL §f> §b此指令需要至少§a_$1:Words:中文数字_个参数"}'
     # [可选, 默认聊天栏] 将消息显示在操作栏 (物品栏上面)
     displayPlace: 'ACTION_BAR'
-
