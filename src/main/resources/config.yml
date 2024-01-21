@@ -1,5 +1,11 @@
 configVersion: 3
-list:
+
+dev:
+  # true  = 适用于 1.20.4 版本的方法 (需要 ProtocolLib 5.2.0
+  # false = 适用于更低版本的旧方法
+  listeningMode: true
+
+list: # 替换列表
 
   # 翻译实体名 :: 24.03/m 前 #**苦力怕** 破坏 草方块
   - inspectLength: 1024
@@ -26,14 +32,22 @@ list:
       ],"color":"#31b0e8","text":""}
 
 
-  # 所有可用配置
-  - inspectLength: 1024 # 检查消息长度是否小于此值
-    # 使用正则表达式匹配
-    get: '^\{"text":"","extra":\["Missing required argument (\d)"\]\}$'
+  # [示例] 所有可用配置
+    # [可选, 默认所有玩家] 对拥有该权限的玩家处理这条消息
+  - permission: 'minecraft.command'
+    # [必选] 检查消息长度是否小于此值
+    inspectLength: 64
+    # [必选] 使用正则表达式匹配
+    get: '^\{"text":"","extra":\["Missing required argument (\d+)"\]\}$'
+    # [必选] 将消息替换为
     # _$1_    = 正则匹配到的变量 1, 也可以是 `_$2_` (第 2 个变量)...
     # _$1:ItemType_   = 将 _$1_ 用于获取物品类型, 提供给 JSON hoverEvent 使用的物品类型 show_entity, show_item(block)
-    # _$1:TranslatedName_  = 将 _$1_ 用于名称翻译, 返回与语言路径对应的 KEY, 例如 `entity.minecraft.allay`
-    set: '{"text":"§bIpacEL §f> §b此指令需要至少 §a_$1_ §b个参数"}'
+    # _$1:TranslatedName_   = 将 _$1_ 用于名称翻译, 返回与语言路径对应的 KEY, 例如 `entity.minecraft.allay`
+    # _$1:Words:组名_   = 将 _$1_ 用于词替换, 需要配置 words.yml
+    # 其他示例:
     # set: >- # YAML 语法中使用 `>-` 可以编写换行的文本, 效果如上
     # set: '' # 如果为空, 则取消发送这条消息
-    displayPlace: 'ACTION_BAR' # 将消息显示在操作栏 (物品栏上面)
+    set: '{"text":"§bIpacEL §f> §b此指令需要至少§a_$1:Words:中文数字_个参数"}'
+    # [可选, 默认聊天栏] 将消息显示在操作栏 (物品栏上面)
+    displayPlace: 'ACTION_BAR'
+
