@@ -57,10 +57,10 @@ public class Util {
 
     // 如果 in1 为空则选择 in2, 否则选择 in1
     public static Object SEL(Object in1, Object in2) {
-        if(in1 == null){
-            return in2;
-        }
-        return in1;
+        return in1 == null ? in2 : in1;
+    }
+    public static Object SEL(Object in1, Object in2, Object in3) {
+        return SEL(SEL(in1, in2), in3);
     }
 }
 

@@ -139,7 +139,8 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                                 String var = matcher.group(Integer.parseInt(cli.dataWordReplace.group(1)));
                                 Word word = (Word) SEL(
                                         words.get(cli.dataWordReplace.group(2) +"."+ player.getLocale() +"."+ var),
-                                        words.get(cli.dataWordReplace.group(2) +".."+ var));
+                                        words.get(cli.dataWordReplace.group(2) +".."+ var),
+                                        var);
                                 if(word != null){
                                     jsonFrame = jsonFrame.replace(cli.dataWordReplace.group(), word.set);
                                 }
