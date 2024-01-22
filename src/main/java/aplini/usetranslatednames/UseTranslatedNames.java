@@ -29,7 +29,7 @@ import static aplini.usetranslatednames.Util.toTranslatedName;
 
 public final class UseTranslatedNames extends JavaPlugin implements CommandExecutor, TabExecutor, Listener {
     // 调试模式
-    private boolean _debug = false;
+    private int _debug = 0;
     // 监听器模式
     boolean listeningMode = true;
     // 词配置 Map<组名.词 or 组名.语言.词, 词配置>
@@ -78,8 +78,11 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
                 if(json == null) return;
 
-                if(_debug){
-                    getLogger().info("[DEBUG] [Player: "+ event.getPlayer().getName() +" (Lang: "+ player.getLocale() +")] [Length: "+ json.length() +"]: -------");
+                if(_debug >= 1){
+                    getLogger().info("");
+                    getLogger().info("[DEBUG] [Player: "+ event.getPlayer().getName() +", Lang: "+ player.getLocale() +"] [Length: "+ json.length() +"]");
+                }
+                if(_debug >= 2){
                     getLogger().info("  - [get]: "+ json);
                 }
 
@@ -155,7 +158,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
                         // 替换原文本中的旧 JSON, 重新发送给玩家
                         jsonFrame = json.replace(oldJson, jsonFrame);
-                        if(_debug){
+                        if(_debug >= 3){
                             getLogger().info("  - [set]: "+ jsonFrame);
                         }
                         // 处理显示位置
@@ -230,6 +233,14 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             list.add("debug"); // 调试模式
             return list;
         }
+        if(args.length == 2 && args[0].equals("debug")){
+            List<String> list = new ArrayList<>();
+            list.add("0 - 关闭调试");
+            list.add("1 - 显示捕获信息");
+            list.add("2 - 显示捕获内容");
+            list.add("3 - 显示替换内容");
+            return list;
+        }
         return null;
     }
     @Override // 执行指令
@@ -241,8 +252,8 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                     "\n"+
                             "IpacEL > UseTranslatedNames: 使用翻译名称\n"+
                             "  指令: \n"+
-                            "    - /utn reload - 重载配置\n"+
-                            "    - /utn debug  - 调试模式\n"+
+                            "    - /utn reload          - 重载配置\n"+
+                            "    - /utn debug [Level]   - 调试模式\n"+
                             "  统计信息: \n"+
                             "    - 监听消息: "+ status.Messages +"\n"+
                             "    - 成功匹配: "+ status.Matches +"\n"+
@@ -260,8 +271,15 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
         // 调试模式
         else if(args[0].equals("debug")){
-            _debug = ! _debug;
-            sender.sendMessage("[UTN] 调试模式: "+ _debug);
+            if(args[1] == null){
+                _debug = _debug == 0 ? 3 : 0;
+            }else{
+                _debug = Integer.parseInt(args[1]);
+                if(_debug >= 4 || _debug <= -1){
+                    _debug = 3;
+                }
+            }
+            sender.sendMessage("[UTN] 调试信息等级: "+ _debug);
             return true;
         }
 
