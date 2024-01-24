@@ -272,13 +272,13 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
         // 调试模式
         else if(args[0].equals("debug")){
-            if(args[1] == null){
-                _debug = _debug == 0 ? 3 : 0;
-            }else{
+            if(args.length > 1){
                 _debug = Integer.parseInt(args[1]);
                 if(_debug >= 4 || _debug <= -1){
-                    _debug = 3;
+                    _debug = 2;
                 }
+            }else{
+                _debug = _debug == 0 ? 2 : 0;
             }
             sender.sendMessage("[UTN] 调试信息等级: "+ _debug);
             return true;
