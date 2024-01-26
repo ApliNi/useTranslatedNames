@@ -254,6 +254,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                     "\n"+
                             "IpacEL > UseTranslatedNames: 使用翻译名称\n"+
                             "  指令: \n"+
+                            "    - /utn json <JSON>     - 测试 JSON 字符串\n"+
                             "    - /utn reload          - 重载配置\n"+
                             "    - /utn debug [Level]   - 调试模式\n"+
                             "  统计信息: \n"+
