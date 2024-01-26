@@ -15,9 +15,9 @@ https://github.com/ApliNi/useTranslatedNames
 
 ## 功能和指令
 - `/utn` 显示插件信息和统计数据
-  - `/utn json <JSON>`  - 测试 JSON 字符串
-  - `/utn reload`       - 重新加载配置
-  - `/utn debug`        - 调试模式
+  - `/utn json <JSON>`    - 测试 JSON 字符串
+  - `/utn reload`         - 重新加载配置
+  - `/utn debug [Level]`  - 调试模式
 
 插件会根据配置捕获对应的服务端消息, 然后替换其中的物品名称并重新发送消息. 详细信息参考"配置"部分.
 
