@@ -230,6 +230,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if(args.length == 1){
             List<String> list = new ArrayList<>();
+            list.add("json"); // 测试json字符串
             list.add("reload"); // 重载配置
             list.add("debug"); // 调试模式
             return list;
@@ -260,6 +261,16 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                             "    - 成功匹配: "+ status.Matches +"\n"+
                             "    - 平均延迟: "+ String.format("%.2f", ((float) status.Matches / status.TotalTime)) +" ms  [累计: "+ status.TotalTime +" ms]"
             );
+            return true;
+        }
+
+        // 测试 json 消息
+        else if(args[0].equals("json")){
+            // 获取消息. 并删除前面的 "json "
+            String json = String.join(" ", args).substring(5);
+            sender.sendMessage("[UTN] JSON 消息测试: [Length: "+ json.length() +"]");
+            sender.spigot().sendMessage(ComponentSerializer.parse(json));
+            sender.sendMessage(" ");
             return true;
         }
 
