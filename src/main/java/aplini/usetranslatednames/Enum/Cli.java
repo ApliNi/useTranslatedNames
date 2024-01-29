@@ -86,10 +86,10 @@ public class Cli {
         switch(this.inherit){
             // 支持全局 FINALLY
             case "" -> this.inheritData = overallFinally ? Key.FINALLY : Key.NULL;
-            case "GROUP" -> this.inheritData = Key.LINK;
+            case "LINK" -> this.inheritData = Key.LINK;
             case "CLOSE" -> this.inheritData = Key.CLOSE;
             case "FINALLY" -> this.inheritData = Key.FINALLY;
-            case "GROUP_SER" -> this.inheritData = Key.LINK_SER;
+            case "LINK_SER" -> this.inheritData = Key.LINK_SER;
         }
 
         // 翻译功能

@@ -7,10 +7,10 @@ dev:
   # true  = 适用于 1.20.4 版本的方法 (需要 ProtocolLib 5.2.0
   # false = 适用于更低版本的旧方法
   listeningMode: true
-  # 序列化输入消息
+  # 序列化输入消息, 这有可能影响现有的配置
   serialization: false
-  # [调试中] 对未定义 inherit 的配置使用 FINALLY. 即默认不重复检查替换过的消息
-  # overallFinally: false
+  # 对未定义 inherit 的配置使用 FINALLY. 即匹配后停止继续检查
+  overallFinally: false
 
 list: # 替换列表
 
@@ -37,6 +37,7 @@ list: # 替换列表
         "clickEvent":{"action":"copy_to_clipboard","value":"_$1_"}
         }
       ],"color":"#31b0e8","text":""}
+    inherit: FINALLY
 
   # [示例] 所有可用配置
     # [可选] 仅对拥有该权限的玩家处理这条消息, 默认所有玩家
@@ -68,4 +69,5 @@ list: # 替换列表
     # LINK     = 与下一条配置合并为组, 将此配置处理完毕的内容传递给下一条配置, 请确保存在下一条配置
     # LINK_SER = 使 GROUP 传递序列化后的 JSON 文本
     # CLOSE    = 如果匹配, 则立即退出匹配检查循环, 不再处理任何数据
-    inherit: ''
+    # FINALLY  = 这条消息处理完毕后退出匹配检查循环
+    inherit: FINALLY

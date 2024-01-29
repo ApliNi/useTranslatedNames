@@ -9,8 +9,10 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -49,7 +51,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     // 记录统计信息
     Status status = new Status();
     // 用于记录重复消息的表
-    // private final HashSet<String> duplicateMessage = new HashSet<>();
+    private final HashSet<String> duplicateMessage = new HashSet<>();
 
     @Override
     public void onEnable() {
@@ -81,24 +83,32 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                 String json;
                 if(listeningMode){
                     // 1.20.4 +
-                    json = event.getPacket().getChatComponents().read(0).getJson();
+                    json = event.getPacket().getChatComponents().readSafely(0).getJson();
                 }else{
                     // 1.20.4 -
-                    json = event.getPacket().getStrings().read(0);
+                    json = event.getPacket().getStrings().readSafely(0);
                 }
-                if(json == null || json.isEmpty()) return;
+                if(json == null) return;
 
                 // 序列化消息
+//                getLogger().info(json);
+                String serializationJson;
+                // 原版的玩家加入消息可能在这里处理时会出错
+                // 暂时这样解决一下 (
+                try {
+                    serializationJson = ComponentSerializer.toString(ComponentSerializer.parse(json));
+                } catch (Exception e) {
+                    serializationJson = json;
+                }
                 if(serialization){
-                    json = ComponentSerializer.toString(ComponentSerializer.parse(json));
+                    json = serializationJson;
                 }
                 // 检查消息是否重复
-//                String jsonHashCode = ""+ serializationJson.hashCode();
-//                if(duplicateMessage.contains(serializationJson)){
-//                    duplicateMessage.remove(serializationJson);
-//                    getLogger().info("触发重复删除");
-//                    return;
-//                }
+                String duplicateTest = player.getUniqueId().hashCode() +"."+ serializationJson.toLowerCase().hashCode();
+                if(duplicateMessage.contains(duplicateTest)){
+                    duplicateMessage.remove(duplicateTest);
+                    return;
+                }
 
                 // 需要防止匹配重复的消息
 
@@ -146,7 +156,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             if(cli.inheritData == Key.LINK || cli.inheritData == Key.LINK_SER){
                 getLogger().info("  - [CONFIG: "+ configIndex +"] <=> [CONFIG: "+ (configIndex + 1) +"]");
             }else{
-                getLogger().info("  - [CONFIG: "+ configIndex +"]"+ (configIndex == (listSize - 1) ? " <- [CONFIG END]" : ""));
+                getLogger().info("  - [CONFIG: "+ configIndex +"]"+ (configIndex == (listSize - 1) ? " <- [END]" : ""));
             }
 
         }
@@ -257,11 +267,8 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             // 序列化消息
             BaseComponent[] message = ComponentSerializer.parse(jsonFrame);
 
-//            // 记录重复的消息
-//            if(cli.inheritData == Key.FINALLY){ //  && serialization
-//                getLogger().info("触发重复写入");
-//                duplicateMessage.add(ComponentSerializer.toString(message));
-//            }
+            // 记录即将重复的消息
+            duplicateMessage.add(player.getUniqueId().hashCode() +"."+ ComponentSerializer.toString(message).toLowerCase().hashCode());
 
             // 调试
             if(_debug >= 3){
@@ -389,14 +396,16 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             sender.sendMessage(
                     "\n"+
                             "IpacEL > UseTranslatedNames: 使用翻译名称\n"+
-                            "  指令: \n"+
+                            "  指令:\n"+
                             "    - /utn json <JSON>     - 测试 JSON 字符串\n"+
                             "    - /utn reload          - 重载配置\n"+
                             "    - /utn debug [Level]   - 调试模式\n"+
-                            "  统计信息: \n"+
+                            "  统计信息:\n"+
                             "    - 监听消息: "+ status.Messages +"\n"+
                             "    - 成功匹配: "+ status.Matches +"\n"+
-                            "    - 平均延迟: "+ String.format("%.2f", ((float) status.TotalTime / status.Messages)) +" ms  [累计: "+ String.format("%.2f", status.TotalTime) +" ms]"
+                            "    - 平均延迟: "+ String.format("%.2f", ((float) status.TotalTime / status.Messages)) +" ms  [累计: "+ String.format("%.2f", status.TotalTime) +" ms]\n"+
+                            "  调试信息:\n"+
+                            "    - duplicateMessageSize: "+ duplicateMessage.size()
             );
             return true;
         }
