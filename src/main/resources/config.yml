@@ -4,13 +4,19 @@
 configVersion: 4
 
 dev:
-  # true  = 适用于 1.20.4 版本的方法 (需要 ProtocolLib 5.2.0
-  # false = 适用于更低版本的旧方法
-  listeningMode: true
-  # 序列化输入消息, 这有可能影响现有的配置
-  serialization: false
+  # 选择解析消息的方式, 修改这部分以调整兼容性, 这可能影响现有的配置
+  # ChatComponents      = 支持 1.20.4 和 ProtocolLib 5.2.0
+  # ChatComponents_SER  = 并且输入序列化后的消息 (推荐)
+  # GetStrings       = 支持 1.20.2 及以下版本
+  # GetStrings_SER   = 并且输入序列化后的消息
+  parser: ChatComponents
+  # 消息序列化错误时如何处理, 序列化错误信息可通过 `/utn debug 4` 查看
+  # true  = 放弃处理这条消息
+  # false = 跳过序列化, 继续处理. 这可能持续产生性能问题
+  serializationErrorHandling: true
   # 对未定义 inherit 的配置使用 FINALLY. 即匹配后停止继续检查
-  overallFinally: false
+  # 如果需要多个配置处理一条消息, 可以使用 `inherit: LINK` 配置
+  overallFinally: true
 
 list: # 替换列表
 
@@ -42,7 +48,7 @@ list: # 替换列表
   # [示例] 所有可用配置
     # [可选] 仅对拥有该权限的玩家处理这条消息, 默认所有玩家
   - permission: 'minecraft.command'
-    # [必选] 检查消息长度是否在此区间内 (大于50且小于64)
+    # [必选] 检查消息长度是否在此区间内 (大于等于50且小于等于64)
     inspectLength: [50, 64]
     # [必选] 使用正则表达式匹配
     get: '^\{"text":"","extra":\["Missing required argument (\d+)"\]\}$'
@@ -60,8 +66,9 @@ list: # 替换列表
     # ACTION_BAR  = 这条消息将会显示在操作栏
     displayPlace: ACTION_BAR
     # [可选] 修改消息显示对象
-    # ALL     = 将消息广播给所有玩家. 仅限于只有自己能收到消息的情况
-    # EXCLUDE = 将消息广播给所有玩家, 但不包括自己. 仅限于只有自己能收到消息的情况
+    # _$1_    = 正则变量, 消息仅发送给匹配到的玩家名称, 其他玩家不会收到消息
+    # ALL     = 将自己收到的消息广播给所有玩家
+    # EXCLUDE = 将自己收到的消息广播给所有玩家, 但不包括自己
     # CONSOLE = 将消息转发到控制台, 自己不会收到
     # COPY_TO_CONSOLE = 将消息复制到控制台
     displayObject: ''

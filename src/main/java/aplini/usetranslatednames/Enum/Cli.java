@@ -23,12 +23,6 @@ public class Cli {
     // 权限
     public String permission;
 
-    // 显示位置
-    public String displayPlace;
-
-    // 显示对象
-    public String displayObject;
-
     // 继承配置
     public String inherit;
     public Key inheritData;
@@ -48,10 +42,13 @@ public class Cli {
     public boolean regExpReplaceEn = false;
 
     // 修改显示位置
+    public String displayPlace;
     public Key displayPlaceData = Key.DEFAULT;
 
     // 修改显示对象
+    public String displayObject;
     public Key displayObjectData = Key.DEFAULT;
+    public int displayObjectRegVarId = 0;
 
 
 
@@ -128,6 +125,13 @@ public class Cli {
             case "COPY_TO_CONSOLE": // 将消息复制到控制台
                 this.displayObjectData = Key.COPY_TO_CONSOLE;
                 break;
+            default:
+                // _$1_ 正则变量, 消息仅发送给匹配到的玩家名称, 其他玩家不会收到消息
+                Matcher temp = Pattern.compile("_\\$(\\d+)_").matcher(this.displayObject);
+                if(temp.find()){
+                    this.displayObjectData = Key.REG_VAR;
+                    this.displayObjectRegVarId = Integer.parseInt(temp.group(1));
+                }
         }
 
         return this;
