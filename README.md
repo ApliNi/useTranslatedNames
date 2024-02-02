@@ -18,26 +18,35 @@
 
 ### 配置
 ```yaml
-configVersion: 3
+
+# 更新插件后, 需要手动修改配置版本号, 才能使用一些具有较大改动的功能
+# 更新发布页面会显示版本号和新功能示例
+configVersion: 4
 
 dev:
-  # true  = 适用于 1.20.4 版本的方法 (需要 ProtocolLib 5.2.0
-  # false = 适用于更低版本的旧方法
-  listeningMode: true
+  # 选择解析消息的方式, 修改这部分以调整兼容性
+  # ChatComponents  = 支持 1.20.4 和 ProtocolLib 5.2.0
+  # GetStrings      = 支持 1.20.2 及以下版本
+  parser: ChatComponents
+  # 是否对输入的 JSON 进行序列化, 修改它可能影响现有的配置
+  # CreatePacket        = 使用 protocolLib 创建新数据包再解析, 这没有意义
+  # ComponentSerializer = 这会使 JSON 内部的顺序发生变化, 并可能丢失部分原版消息
+  # NONE  = 不进行序列化
+  serializedInput: NONE
 
 list: # 替换列表
 
   # 翻译实体名 :: 24.03/m 前 #**苦力怕** 破坏 草方块
-  - inspectLength: 1024
+  - inspectLength: [240, 1024]
     get: '\{"text":"#([a-z0-9_]+)§f([^"]+)","color":"#31B0E8"\}'
     set: >-
       {"text":"§8#"},
       {"translate":"_$1:TranslatedName_","color":"#31b0e8"},
       {"text":"§f_$2_","color":"#31B0E8"}
-
+    inherit: LINK
 
   # 翻译物品 :: 24.03/m 前 #苦力怕 破坏 **草方块**
-  - inspectLength: 1024
+  - inspectLength: [350, 1024]
     get: '\{"text":"([a-z0-9_]+)(?:§f.{0,3})?","color":"#31B0E8"\}'
     set: >-
       {"extra":[
@@ -51,12 +60,11 @@ list: # 替换列表
         }
       ],"color":"#31b0e8","text":""}
 
-
     # [示例] 所有可用配置
-    # [可选, 默认所有玩家] 对拥有该权限的玩家处理这条消息
+    # [可选] 仅对拥有该权限的玩家处理这条消息, 默认所有玩家
   - permission: 'minecraft.command'
-    # [必选] 检查消息长度是否小于此值
-    inspectLength: 64
+    # [必选] 检查消息长度是否在此区间内 (大于等于50且小于等于64)
+    inspectLength: [50, 64]
     # [必选] 使用正则表达式匹配
     get: '^\{"text":"","extra":\["Missing required argument (\d+)"\]\}$'
     # [必选] 将消息替换为
@@ -67,9 +75,23 @@ list: # 替换列表
     # 其他示例:
     # set: >- # YAML 语法中使用 `>-` 可以编写换行的文本, 效果如上
     # set: '' # 如果为空, 则取消发送这条消息
+    # set: _USE_GET_ # 将 get 匹配到的消息原封不动的搬下来
     set: '{"text":"§bIpacEL §f> §b此指令需要至少§a_$1:Words:中文数字_个参数"}'
-    # [可选, 默认聊天栏] 将消息显示在操作栏 (物品栏上面)
-    displayPlace: 'ACTION_BAR'
+    # [可选] 修改消息显示位置
+    # ACTION_BAR  = 这条消息将会显示在操作栏
+    displayPlace: ACTION_BAR
+    # [可选] 修改消息显示对象
+    # _$1_    = 正则变量, 消息仅发送给匹配到的玩家名称, 其他玩家不会收到消息
+    # ALL     = 将自己收到的消息广播给所有玩家
+    # EXCLUDE = 将自己收到的消息广播给所有玩家, 但不包括自己
+    # CONSOLE = 将消息转发到控制台, 自己不会收到
+    # COPY_TO_CONSOLE = 将消息复制到控制台
+    displayObject: ''
+    # [可选] 继承和其他配置. 将多个配置合并为组, 同时处理来提高性能
+    # LINK     = 与下一条配置合并为组, 将此配置处理完毕的内容传递给下一条配置, 请确保存在下一条配置
+    # LINK_SER = 使 GROUP 传递序列化后的 JSON 文本
+    # CLOSE    = 如果匹配, 则立即退出匹配检查循环, 不再处理任何数据
+    inherit: ''
 
 ```
 
