@@ -12,10 +12,9 @@ public enum Key {
     LINK,
     LINK_SER,
     CLOSE,
-    FINALLY,
     REG_VAR,
     ChatComponents,
-    ChatComponents_SER,
     GetStrings,
-    GetStrings_SER,
+    CreatePacket,
+    ComponentSerializer,
 }

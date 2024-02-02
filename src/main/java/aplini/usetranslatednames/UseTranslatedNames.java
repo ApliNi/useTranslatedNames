@@ -6,11 +6,13 @@ import aplini.usetranslatednames.Enum.Status;
 import aplini.usetranslatednames.Enum.Word;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -31,26 +33,29 @@ import static aplini.usetranslatednames.Util.toTranslatedName;
 
 
 public final class UseTranslatedNames extends JavaPlugin implements CommandExecutor, TabExecutor, Listener {
+
     // 用户配置版本
-    public static int _configVersion = 0;
-    // 调试模式
-    private int _debug = 0;
+    public static int _configVersion;
     // 解析器模式
-    Key parser = Key.NULL;
-    // 序列化错误处理配置
-    boolean serializationErrorHandling = true;
-    // 对未定义 inherit 的配置使用 FINALLY
-    public static boolean overallFinally = false;
+    Key parser;
+    // 序列化输入 JSON
+    Key serializedInput;
+
     // 词配置 Map<组名.词 or 组名.语言.词, 词配置>
     private HashMap<String, Word> words;
     // 配置文件
-    List<Cli> list = new ArrayList<>();
+    List<Cli> list;
     int listSize = 0;
+
+    // 调试模式
+    private int _debug = 0;
+
     // 记录统计信息
     Status status = new Status();
-    // 用于记录重复消息的表
-    // "玩家UUID哈希码.消息转小写后的哈希码", 在发送一条消息之前写入, 监听到同一条消息后删除
-    private final List<String> duplicateMessage = new ArrayList<>();
+
+    // 用于静默发送聊天消息, 绕过消息监听器
+    private ProtocolManager protocolManager;
+
 
     @Override
     public void onEnable() {
@@ -64,6 +69,8 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
 
         // 注册指令
         Objects.requireNonNull(getCommand("utn")).setExecutor(this);
+
+        protocolManager = ProtocolLibrary.getProtocolManager();
 
 
         // 添加一个数据包监听器
@@ -79,36 +86,14 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                 Player player = event.getPlayer();
 
                 // 获取消息 JSON
-                String json = null;
-                switch(parser){
-                    case ChatComponents:
-                        // 1.20.4 +
-                        json = event.getPacket().getChatComponents().readSafely(0).getJson();
-                        if(serializationAndDuplicateChecking(player, json) == null){
-                            return;
-                        }
-                        break;
-
-                    case ChatComponents_SER:
-                        json = serializationAndDuplicateChecking(player,
-                                // 1.20.4 +
-                                event.getPacket().getChatComponents().readSafely(0).getJson());
-                        break;
-
-                    case GetStrings:
-                        // 1.20.4 -
-                        json = event.getPacket().getStrings().readSafely(0);
-                        if(serializationAndDuplicateChecking(player, json) == null){
-                            return;
-                        }
-                        break;
-
-                    case GetStrings_SER:
-                        json = serializationAndDuplicateChecking(player,
-                                // 1.20.4 -
-                                event.getPacket().getStrings().readSafely(0));
-                        break;
-                }
+                String json = serializationJson(switch(parser){
+                    // 1.20.4 +
+                    case ChatComponents -> event.getPacket().getChatComponents().readSafely(0).getJson();
+                    // 1.20.4 -
+                    case GetStrings -> event.getPacket().getStrings().readSafely(0);
+                    //
+                    default -> null;
+                });
                 if(json == null){return;}
 
                 // 处理调试信息
@@ -124,20 +109,20 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                 // 运行字符串替换
                 runJsonTestReplaceAll(event, player, json);
 
-                // 记录运行时间
-                status.Messages ++;
-                status.TotalTime += (System.nanoTime() - _startTime) / 1_000_000.0;
-
                 if(_debug >= 2){
                     getLogger().info("  - [Time: "+ String.format("%.3f", (System.nanoTime() - _startTime) / 1_000_000.0) +" ms]");
                 }
+
+                // 记录运行时间
+                status.Messages ++;
+                status.TotalTime += System.nanoTime() - _startTime;
             }
         });
 
         getLogger().info("UseTranslatedNames 已启动");
     }
 
-    // 处理字符串替换
+    // 遍历所有替换配置, 直到 runJsonTestReplaceConfig 返回 true
     public void runJsonTestReplaceAll(PacketEvent event, Player player, String jsonTest){
         // 遍历替换配置
         for(int i = 0; i < listSize; i++){
@@ -148,6 +133,14 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         }
     }
 
+    /**
+     * 处理字符串替换
+     * @param event     PacketEvent
+     * @param player    接收消息的玩家
+     * @param jsonTest  即将发送的 JSON 字符串
+     * @param configIndex 处理这条消息的配置所在的位置
+     * @return true = 完成替换, 无需继续循环. false = 不匹配
+     */
     public boolean runJsonTestReplaceConfig(PacketEvent event, Player player, String jsonTest, int configIndex){
 
         Cli cli = list.get(configIndex);
@@ -158,18 +151,17 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             }else{
                 getLogger().info("  - [CONFIG: "+ configIndex +"]"+ (configIndex == (listSize - 1) ? " <- [END]" : ""));
             }
-
         }
 
         boolean forOK = false;
 
-        // 如果权限不为空 且 玩家没有该权限, 则不进行替换
-        if(!cli.permission.isEmpty() && !player.hasPermission(cli.permission)){
+        // 启用权限时, 玩家没有该权限则不进行替换
+        if(cli.permissionEn && !player.hasPermission(cli.permission)){
             return false;
         }
 
         // 防止处理过长或过短的消息
-        if(jsonTest.length() > cli.inspectLengthMax && jsonTest.length() < cli.inspectLengthMin){
+        if(jsonTest.length() > cli.inspectLengthMax || jsonTest.length() < cli.inspectLengthMin){
             return false;
         }
 
@@ -265,49 +257,48 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
             }
 
             // 序列化消息
-            BaseComponent[] message = ComponentSerializer.parse(jsonFrame);
+//            BaseComponent[] message = ComponentSerializer.parse(jsonFrame);
 
             // 调试
             if(_debug >= 3){
-                getLogger().info("  - [SET]: "+ ComponentSerializer.toString(message));
+                getLogger().info("  - [SET]: "+ serializationJson(jsonFrame));
             }
 
             // 处理显示对象
             switch(cli.displayObjectData){
 
                 case DEFAULT: // 默认方式处理
-                    sendJsonMessage(cli, player, message);
+                    sendJsonMessage(cli, player, jsonFrame);
                     break;
 
                 case REG_VAR: // 消息仅发送给匹配到的玩家名称, 其他玩家不会收到消息
                     if(player.getName().equalsIgnoreCase(matcher.group(cli.displayObjectRegVarId))){
-                        sendJsonMessage(cli, player, message);
+                        sendJsonMessage(cli, player, jsonFrame);
                     }
                     break;
 
                 case ALL: // 将消息广播给所有玩家. 仅限于只有自己能收到消息的情况
                     for(Player tp : Bukkit.getOnlinePlayers()){
-                        sendJsonMessage(cli, tp, message);
+                        sendJsonMessage(cli, tp, jsonFrame);
                     }
                     break;
 
                 case EXCLUDE: // 将消息广播给所有玩家, 但不包括自己. 仅限于只有自己能收到消息的情况
                     for(Player tp : Bukkit.getOnlinePlayers()){
-                        if(player != tp){
-                            sendJsonMessage(cli, tp, message);
-                        }
+                        if(player == tp){continue;}
+                        sendJsonMessage(cli, tp, jsonFrame);
                     }
                     break;
 
                 case CONSOLE: // 将消息转发到控制台, 自己不会收到
                     getLogger().info("["+ player.getName() +"]:");
-                    Bukkit.getConsoleSender().spigot().sendMessage(message);
+                    Bukkit.getConsoleSender().spigot().sendMessage(ComponentSerializer.parse(jsonFrame));
                     break;
 
                 case COPY_TO_CONSOLE: // 将消息复制到控制台
                     getLogger().info("["+ player.getName() +"]:");
-                    Bukkit.getConsoleSender().spigot().sendMessage(message);
-                    sendJsonMessage(cli, player, message);
+                    Bukkit.getConsoleSender().spigot().sendMessage(ComponentSerializer.parse(jsonFrame));
+                    sendJsonMessage(cli, player, jsonFrame);
                     break;
             }
             forOK = true;
@@ -316,53 +307,54 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     }
 
     // 将消息显示给玩家
-    public void sendJsonMessage(Cli cli, Player player, BaseComponent[] message){
-        // 记录这个会重复的消息, 然后下一次匹配时过滤掉它
-        duplicateMessage.add(player.getUniqueId().hashCode() +"."+ ComponentSerializer.toString(message).toLowerCase().hashCode());
+    public void sendJsonMessage(Cli cli, Player player, String json){
         // 处理 "显示位置"
         if(cli.displayPlaceData == Key.ACTION_BAR){
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, message);
-        } else {
-            player.spigot().sendMessage(message);
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, ComponentSerializer.parse(json));
+        }else{
+            // 使用 protocolLib 静默发送, 防止重复处理聊天消息
+            PacketContainer chatPacket = protocolManager.createPacket(PacketType.Play.Server.SYSTEM_CHAT);
+            chatPacket.getChatComponents().write(0, WrappedChatComponent.fromJson(json));
+            protocolManager.sendServerPacket(player, chatPacket, false);
         }
     }
 
-    // 序列化和重复消息检查
-    // null  = 不需要处理这条消息
-    // 字符串 = 正常处理
-    public String serializationAndDuplicateChecking(Player player, String inp){
-        String serJson;
-        try {
-            // 序列化消息
-            serJson = ComponentSerializer.toString(ComponentSerializer.parse(inp));
-            // 处理重复消息
-            if(notDuplicateMessage(player, serJson)){
-                return serJson;
+    // 序列化 JSON 消息
+    // null  = 出错, 抛弃这条消息; 字符串 = 正常处理
+    public String serializationJson(String inp){
+        switch (serializedInput){
+
+            // 使用 protocolLib 创建新数据包再解析, 这没有意义
+            case CreatePacket -> {
+                PacketContainer chatPacket = protocolManager.createPacket(PacketType.Play.Server.SYSTEM_CHAT);
+                chatPacket.getChatComponents().write(0, WrappedChatComponent.fromJson(inp));
+                return chatPacket.getChatComponents().readSafely(0).getJson();
             }
-            return null;
-        } catch (Exception e) {
-            if(_debug >= 4){
-                getLogger().warning("消息序列化错误: "+ e.getMessage());
+
+            // 这会使 JSON 内部的顺序发生变化, 并可能丢失部分原版消息
+            case ComponentSerializer -> {
+                try {
+                    // 序列化消息
+                    return ComponentSerializer.toString(ComponentSerializer.parse(inp));
+                } catch (Exception e) {
+                    if(_debug >= 4){
+                        getLogger().warning("[DEBUG] 消息序列化错误");
+                        throw new RuntimeException(e);
+                    }
+                    return null;
+                }
             }
-            // 跳过序列化, 继续处理. 这可能持续产生性能问题
-            if(serializationErrorHandling){
-                return null;
-            }else{
-                serJson = inp;
+
+            // 不进行序列化
+            case NULL -> {
+                return inp;
+            }
+            default -> {
+                return inp;
             }
         }
-        return serJson;
     }
 
-    // 检查重复的消息
-    public boolean notDuplicateMessage(Player player, String serJson){
-        String duplicateTest = player.getUniqueId().hashCode() +"."+ serJson.toLowerCase().hashCode();
-        if(duplicateMessage.contains(duplicateTest)){
-            duplicateMessage.remove(duplicateTest);
-            return false;
-        }
-        return true;
-    }
 
     // 加载配置文件
     public long loadConfig(){
@@ -384,33 +376,26 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         }
 
         // 解析器设置
-        switch(getConfig().getString("parser", "")){
-            case "ChatComponents":
-                parser = Key.ChatComponents;
-                break;
-            case "ChatComponents_SER":
-                parser = Key.ChatComponents_SER;
-                break;
-            case "GetStrings":
-                parser = Key.GetStrings;
-                break;
-            case "GetStrings_SER":
-                parser = Key.GetStrings_SER;
-                break;
-            default:
+        switch(getConfig().getString("dev.parser", "")){
+            case "ChatComponents" -> parser = Key.ChatComponents;
+            case "GetStrings" -> parser = Key.GetStrings;
+            default -> {
                 // 兼容旧配置
-                getLogger().warning("存在已弃用的配置 `listeningMode`, 请使用 `parser` 代替");
+                getLogger().warning("缺少配置选项 `dev.parser` 或存在已弃用的配置 `dev.listeningMode`");
                 if(getConfig().getBoolean("dev.listeningMode", true)){
                     parser = Key.ChatComponents;
                 }else{
                     parser = Key.GetStrings;
                 }
-                break;
+            }
         }
-        // 序列化错误处理配置
-        serializationErrorHandling = getConfig().getBoolean("serializationErrorHandling", true);
-        // 全局 Finally
-        overallFinally = getConfig().getBoolean("dev.overallFinally", false);
+
+        // 消息序列化设置
+        serializedInput = switch(getConfig().getString("dev.serializedInput", "")){
+            case "CreatePacket" -> Key.CreatePacket;
+            case "ComponentSerializer" -> Key.ComponentSerializer;
+            default -> Key.NULL;
+        };
 
         // 处理词替换配置
         words = new HashMap<>();
@@ -460,6 +445,9 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     @Override // 执行指令
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
+        double TotalTime = status.TotalTime / 1_000_000.0;
+        double AverageTime = TotalTime / status.Messages;
+
         // 默认输出插件信息
         if(args.length == 0){
             sender.sendMessage(
@@ -472,9 +460,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                             "  统计信息:\n"+
                             "    - 监听消息: "+ status.Messages +"\n"+
                             "    - 成功匹配: "+ status.Matches +"\n"+
-                            "    - 平均延迟: "+ String.format("%.2f", ((float) status.TotalTime / status.Messages)) +" ms  [累计: "+ String.format("%.2f", status.TotalTime) +" ms]\n"+
-                            "  调试信息:\n"+
-                            "    - duplicateMessageSize: "+ duplicateMessage.size()
+                            "    - 平均延迟: "+ String.format("%.2f", AverageTime) +" ms  [累计: "+ String.format("%.2f", TotalTime) +" ms]\n"
             );
             return true;
         }

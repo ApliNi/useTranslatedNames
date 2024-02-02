@@ -4,19 +4,15 @@
 configVersion: 4
 
 dev:
-  # 选择解析消息的方式, 修改这部分以调整兼容性, 这可能影响现有的配置
-  # ChatComponents      = 支持 1.20.4 和 ProtocolLib 5.2.0
-  # ChatComponents_SER  = 并且输入序列化后的消息 (推荐)
-  # GetStrings       = 支持 1.20.2 及以下版本
-  # GetStrings_SER   = 并且输入序列化后的消息
+  # 选择解析消息的方式, 修改这部分以调整兼容性
+  # ChatComponents  = 支持 1.20.4 和 ProtocolLib 5.2.0
+  # GetStrings      = 支持 1.20.2 及以下版本
   parser: ChatComponents
-  # 消息序列化错误时如何处理, 序列化错误信息可通过 `/utn debug 4` 查看
-  # true  = 放弃处理这条消息
-  # false = 跳过序列化, 继续处理. 这可能持续产生性能问题
-  serializationErrorHandling: true
-  # 对未定义 inherit 的配置使用 FINALLY. 即匹配后停止继续检查
-  # 如果需要多个配置处理一条消息, 可以使用 `inherit: LINK` 配置
-  overallFinally: true
+  # 是否对输入的 JSON 进行序列化, 修改它可能影响现有的配置
+  # CreatePacket        = 使用 protocolLib 创建新数据包再解析, 这没有意义
+  # ComponentSerializer = 这会使 JSON 内部的顺序发生变化, 并可能丢失部分原版消息
+  # NONE  = 不进行序列化
+  serializedInput: NONE
 
 list: # 替换列表
 
@@ -43,7 +39,6 @@ list: # 替换列表
         "clickEvent":{"action":"copy_to_clipboard","value":"_$1_"}
         }
       ],"color":"#31b0e8","text":""}
-    inherit: FINALLY
 
   # [示例] 所有可用配置
     # [可选] 仅对拥有该权限的玩家处理这条消息, 默认所有玩家
@@ -76,5 +71,4 @@ list: # 替换列表
     # LINK     = 与下一条配置合并为组, 将此配置处理完毕的内容传递给下一条配置, 请确保存在下一条配置
     # LINK_SER = 使 GROUP 传递序列化后的 JSON 文本
     # CLOSE    = 如果匹配, 则立即退出匹配检查循环, 不再处理任何数据
-    # FINALLY  = 这条消息处理完毕后退出匹配检查循环
-    inherit: FINALLY
+    inherit: ''

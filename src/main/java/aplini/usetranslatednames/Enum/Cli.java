@@ -6,7 +6,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static aplini.usetranslatednames.UseTranslatedNames._configVersion;
-import static aplini.usetranslatednames.UseTranslatedNames.overallFinally;
 import static aplini.usetranslatednames.Util.SEL;
 import static org.bukkit.Bukkit.getLogger;
 
@@ -22,6 +21,7 @@ public class Cli {
 
     // 权限
     public String permission;
+    public boolean permissionEn = false;
 
     // 继承配置
     public String inherit;
@@ -57,8 +57,14 @@ public class Cli {
 
         if(_configVersion >= 4){
             ArrayList<?> temp = (ArrayList<?>) li.get("inspectLength");
-            this.inspectLengthMin = (int) temp.get(0);
-            this.inspectLengthMax = (int) temp.get(1);
+            // 只填写一位则代表要求长度相等
+            if(temp.size() == 2){
+                this.inspectLengthMin = (int) temp.get(0);
+                this.inspectLengthMax = (int) temp.get(1);
+            }else{
+                this.inspectLengthMin = (int) temp.get(0);
+                this.inspectLengthMax = this.inspectLengthMin;
+            }
         }else{
             this.inspectLengthMin = 0;
             this.inspectLengthMax = (int) li.get("inspectLength");
@@ -77,15 +83,15 @@ public class Cli {
 
         // 可选配置
         this.permission = (String) SEL(li.get("permission"), "");
+        this.permissionEn = !this.permission.isEmpty();
 
         // 继承和其他配置, 将多个配置合并为组同时处理来提高性能
         this.inherit = (String) SEL(li.get("inherit"), "");
         switch(this.inherit){
             // 支持全局 FINALLY
-            case "" -> this.inheritData = overallFinally ? Key.FINALLY : Key.NULL;
+            case "" -> this.inheritData = Key.NULL;
             case "LINK" -> this.inheritData = Key.LINK;
             case "CLOSE" -> this.inheritData = Key.CLOSE;
-            case "FINALLY" -> this.inheritData = Key.FINALLY;
             case "LINK_SER" -> this.inheritData = Key.LINK_SER;
         }
 
@@ -108,30 +114,33 @@ public class Cli {
 
         // 修改显示对象
         this.displayObject = (String) SEL(li.get("displayObject"), "");
-        switch(this.displayObject){
-            case "ALL": // 将消息广播给所有玩家. 仅限于只有自己能收到消息的情况
-                this.displayObjectData = Key.ALL;
-                break;
-            case "EXCLUDE": // 将消息广播给所有玩家, 但不包括自己. 仅限于只有自己能收到消息的情况
-                this.displayObjectData = Key.EXCLUDE;
-                break;
-            case "CONSOLE": // 将消息转发到控制台, 自己不会收到
+        switch (this.displayObject) {
+
+            // 将消息广播给所有玩家. 仅限于只有自己能收到消息的情况
+            case "ALL" -> this.displayObjectData = Key.ALL;
+
+            // 将消息广播给所有玩家, 但不包括自己. 仅限于只有自己能收到消息的情况
+            case "EXCLUDE" -> this.displayObjectData = Key.EXCLUDE;
+
+            case "CONSOLE" -> {
                 // 如果启用了 displayPlace = ACTION_BAR, 则发出一个警告
-                if(this.displayPlaceData == Key.ACTION_BAR){
+                if (this.displayPlaceData == Key.ACTION_BAR) {
                     getLogger().warning("[UTN] 已启用的配置 `displayPlace: ACTION_BAR` 与 `displayObject: CONSOLE` 冲突");
                 }
-                this.displayObjectData = Key.CONSOLE;
-                break;
-            case "COPY_TO_CONSOLE": // 将消息复制到控制台
-                this.displayObjectData = Key.COPY_TO_CONSOLE;
-                break;
-            default:
+                this.displayObjectData = Key.CONSOLE; // 将消息转发到控制台, 自己不会收到
+            }
+
+            // 将消息复制到控制台
+            case "COPY_TO_CONSOLE" -> this.displayObjectData = Key.COPY_TO_CONSOLE;
+
+            default -> {
                 // _$1_ 正则变量, 消息仅发送给匹配到的玩家名称, 其他玩家不会收到消息
                 Matcher temp = Pattern.compile("_\\$(\\d+)_").matcher(this.displayObject);
-                if(temp.find()){
+                if (temp.find()) {
                     this.displayObjectData = Key.REG_VAR;
                     this.displayObjectRegVarId = Integer.parseInt(temp.group(1));
                 }
+            }
         }
 
         return this;
