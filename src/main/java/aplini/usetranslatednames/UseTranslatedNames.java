@@ -21,7 +21,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -33,6 +36,8 @@ import static aplini.usetranslatednames.Util.toTranslatedName;
 
 
 public final class UseTranslatedNames extends JavaPlugin implements CommandExecutor, TabExecutor, Listener {
+
+    public static UseTranslatedNames plugin;
 
     // 用户配置版本
     public static int _configVersion;
@@ -48,30 +53,47 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
     int listSize = 0;
 
     // 调试模式
-    private int _debug = 0;
+    public static int _debug = 0;
 
     // 记录统计信息
-    Status status = new Status();
+    static Status status = new Status();
 
     // 用于静默发送聊天消息, 绕过消息监听器
-    private ProtocolManager protocolManager;
+    public static ProtocolManager protocolManager;
 
 
     @Override
     public void onEnable() {
+        plugin = this;
         loadConfig();
         Util.load(this);
 
         // bStats
-        if(getConfig().getBoolean("bStats", true)){
-            new Metrics(this, 20766);
-        }
+        // 收集一些性能数据和消息总数
+        Metrics metrics = new Metrics(this, 20766);
+        // 平均消息延迟
+        metrics.addCustomChart(new Metrics.SimplePie("AverageTime", () -> {
+            double TotalTime = status.TotalTime / 1_000_000.0;
+            double AverageTime = TotalTime / status.MsgCount;
+            return String.format("%.2f", AverageTime) +"ms";
+        }));
+        // 其他统计信息
+//        metrics.addCustomChart(new Metrics.MultiLineChart("Status", () -> {
+//            Map<String, Integer> map = new HashMap<>();
+//            map.put("NumberOfMessages", Math.toIntExact(status.MsgCount));
+//            map.put("NumberOfMatches", Math.toIntExact(status.MatchesCount));
+//            map.put("NumberOfTotalTime", Math.toIntExact(Math.round(status.TotalTime / 1e9)));
+//            return map;
+//        }));
+        metrics.addCustomChart(new Metrics.SingleLineChart("MsgCount", () -> Math.toIntExact(status.MsgCount)));
+        metrics.addCustomChart(new Metrics.SingleLineChart("MatchesCount", () -> Math.toIntExact(status.MatchesCount)));
+        metrics.addCustomChart(new Metrics.SingleLineChart("TotalTime", () -> Math.toIntExact(Math.round(status.TotalTime / 1e9))));
 
         // 注册指令
         Objects.requireNonNull(getCommand("utn")).setExecutor(this);
 
+        // 用于静默发送聊天消息, 绕过消息监听器
         protocolManager = ProtocolLibrary.getProtocolManager();
-
 
         // 添加一个数据包监听器
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(this,
@@ -114,7 +136,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                 }
 
                 // 记录运行时间
-                status.Messages ++;
+                status.MsgCount++;
                 status.TotalTime += System.nanoTime() - _startTime;
             }
         });
@@ -169,7 +191,7 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         Matcher matcher = cli.regExp.matcher(jsonTest);
         while(matcher.find()){
 
-            status.Matches ++;
+            status.MatchesCount++;
 
             if(_debug >= 4){
                 getLogger().info("    - [HIT]");
@@ -418,7 +440,39 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         }
         listSize = list.size();
 
+        // 配置玩家消息监听器
+        onPlayerChat.mode = switch(getConfig().getString("dev.convertPlayerMessages", "NONE")){
+            case "Convert" -> Key.Convert;
+            case "ConvertBypass" -> Key.ConvertBypass;
+            default -> Key.NONE;
+        };
+        // 注册和注销监听器
+        if(onPlayerChat.mode == Key.NONE){
+            if(onPlayerChat.func != null){
+                HandlerList.unregisterAll(onPlayerChat.func);
+                onPlayerChat.func = null;
+            }
+        }else{
+            if(onPlayerChat.func == null){
+                onPlayerChat.func = new onPlayerChat();
+                getServer().getPluginManager().registerEvents(onPlayerChat.func, this);
+            }
+        }
+
         return Math.round((System.nanoTime() - _startTime) / 1_000_000.0);
+    }
+
+
+    @EventHandler
+    public void onPlayerChat(AsyncPlayerChatEvent event){
+        String message = event.getMessage();
+
+        // 在这里处理玩家发送的消息
+        // 你可以根据需要进行逻辑处理或条件检查
+
+        // 示例：将玩家发送的消息改为大写
+        String upperCaseMessage = message.toUpperCase();
+        event.setMessage(upperCaseMessage);
     }
 
 
@@ -443,10 +497,10 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         return null;
     }
     @Override // 执行指令
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args){
 
         double TotalTime = status.TotalTime / 1_000_000.0;
-        double AverageTime = TotalTime / status.Messages;
+        double AverageTime = TotalTime / status.MsgCount;
 
         // 默认输出插件信息
         if(args.length == 0){
@@ -458,8 +512,8 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                             "    - /utn reload          - 重载配置\n"+
                             "    - /utn debug [Level]   - 调试模式\n"+
                             "  统计信息:\n"+
-                            "    - 监听消息: "+ status.Messages +"\n"+
-                            "    - 成功匹配: "+ status.Matches +"\n"+
+                            "    - 监听消息: "+ status.MsgCount +"\n"+
+                            "    - 成功匹配: "+ status.MatchesCount +"\n"+
                             "    - 平均延迟: "+ String.format("%.2f", AverageTime) +" ms  [累计: "+ String.format("%.2f", TotalTime) +" ms]\n"
             );
             return true;

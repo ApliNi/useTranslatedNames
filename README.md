@@ -31,8 +31,13 @@ dev:
   # 是否对输入的 JSON 进行序列化, 修改它可能影响现有的配置
   # CreatePacket        = 使用 protocolLib 创建新数据包再解析, 这没有意义
   # ComponentSerializer = 这会使 JSON 内部的顺序发生变化, 并可能丢失部分原版消息
-  # NONE  = 不进行序列化
+  # NONE                = 不进行序列化
   serializedInput: NONE
+  # 将玩家消息转换为系统消息
+  # Convert       = 转换消息并进行替换
+  # ConvertBypass = 转换消息并绕过替换
+  # NONE          = 禁用此功能
+  convertPlayerMessages: NONE
 
 list: # 替换列表
 
@@ -64,13 +69,13 @@ list: # 替换列表
     # [可选] 仅对拥有该权限的玩家处理这条消息, 默认所有玩家
   - permission: 'minecraft.command'
     # [必选] 检查消息长度是否在此区间内
-    # [50, 64]  = 大于等于50且小于等于64
+    # [50, 64]  = 大于等于 50 且小于等于 64
     # [64]      = 等于 64
     inspectLength: [50, 64]
     # [必选] 使用正则表达式匹配
     get: '^\{"text":"","extra":\["Missing required argument (\d+)"\]\}$'
     # [必选] 将消息替换为
-    # _$1_    = 正则匹配到的变量 1, 也可以是 `_$2_` (第 2 个变量)...
+    # _$1_    = 正则匹配到的变量 1, 也可以是 _$2_ (第 2 个变量)...
     # _$1:ItemType_   = 将 _$1_ 用于获取物品类型, 提供给 JSON hoverEvent 使用的物品类型 show_entity, show_item(block)
     # _$1:TranslatedName_   = 将 _$1_ 用于名称翻译, 返回与语言路径对应的 KEY, 例如 `entity.minecraft.allay`
     # _$1:Words:组名_   = 将 _$1_ 用于词替换, 需要配置 words.yml
@@ -91,8 +96,8 @@ list: # 替换列表
     displayObject: ''
     # [可选] 继承和其他配置. 将多个配置合并为组, 同时处理来提高性能
     # LINK     = 与下一条配置合并为组, 将此配置处理完毕的内容传递给下一条配置, 请确保存在下一条配置
-    # LINK_SER = 使 GROUP 传递序列化后的 JSON 文本
-    # CLOSE    = 如果匹配, 则立即退出匹配检查循环, 不再处理任何数据
+    # LINK_SER = 使 LINK 传递序列化后的 JSON 文本, 需要开启序列化功能
+    # CLOSE    = 如果匹配, 则停止处理这条消息, 可用于排除一些被高频发送的消息
     inherit: ''
 
 ```

@@ -17,4 +17,7 @@ public enum Key {
     GetStrings,
     CreatePacket,
     ComponentSerializer,
+    Convert,
+    ConvertBypass,
+    NONE,
 }
