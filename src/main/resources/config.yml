@@ -31,7 +31,7 @@ list: # 替换列表
     inherit: LINK
 
   # 翻译物品 :: 24.03/m 前 #苦力怕 破坏 **草方块**
-  - inspectLength: [350, 1024]
+  - inspectLength: [240, 1024]
     get: '\{"text":"([a-z0-9_]+)(?:§f.{0,3})?","color":"#31B0E8"\}'
     set: >-
       {"extra":[

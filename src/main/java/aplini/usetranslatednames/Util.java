@@ -5,13 +5,14 @@ import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 
 import java.util.HashMap;
+import java.util.Map;
 
 
 public class Util {
 
     // 遍历所有实体和物品
-    private static final HashMap<String, EntityType> enumEntity = new HashMap<>();
-    private static final HashMap<String, Material> enumBlock = new HashMap<>();
+    private static final Map<String, EntityType> enumEntity = new HashMap<>();
+    private static final Map<String, Material> enumBlock = new HashMap<>();
 
     static void load(UseTranslatedNames plugin) {
         // 遍历服务器中的物品和实体

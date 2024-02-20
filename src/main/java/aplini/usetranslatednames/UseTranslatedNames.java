@@ -334,10 +334,21 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
         if(cli.displayPlaceData == Key.ACTION_BAR){
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, ComponentSerializer.parse(json));
         }else{
-            // 使用 protocolLib 静默发送, 防止重复处理聊天消息
-            PacketContainer chatPacket = protocolManager.createPacket(PacketType.Play.Server.SYSTEM_CHAT);
-            chatPacket.getChatComponents().write(0, WrappedChatComponent.fromJson(json));
-            protocolManager.sendServerPacket(player, chatPacket, false);
+            switch(parser){
+                // 1.20.4 +
+                case ChatComponents -> {
+                    // 使用 protocolLib 静默发送, 防止重复处理聊天消息
+                    PacketContainer chatPacket = protocolManager.createPacket(PacketType.Play.Server.SYSTEM_CHAT);
+                    chatPacket.getChatComponents().write(0, WrappedChatComponent.fromJson(json));
+                    protocolManager.sendServerPacket(player, chatPacket, false);
+                }
+                // 1.20.4 -
+                case GetStrings -> {
+                    player.spigot().sendMessage(ComponentSerializer.parse(json));
+                }
+                //
+                default -> {}
+            };
         }
     }
 
