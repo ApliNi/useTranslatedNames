@@ -126,5 +126,3 @@ words:
 ### 依赖
 - ProtocolLib
 
-### 友链
-- [Cloudflare](https://www.cloudflare.com/)
