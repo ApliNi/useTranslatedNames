@@ -32,7 +32,7 @@ list: # 替换列表
 
   # 翻译物品 :: 24.03/m 前 #苦力怕 破坏 **草方块**
   - inspectLength: [240, 1024]
-    get: '\{"text":"([a-z0-9_]+)(?:§f.{0,3})?","color":"#31B0E8"\}'
+    get: '\{"text":"([a-z0-9_]+)(?:§f.{0,3})?"(?:,"strikethrough":true)?,"color":"#31B0E8"\}'
     set: >-
       {"extra":[
         {"translate":"_$1:TranslatedName_"},
