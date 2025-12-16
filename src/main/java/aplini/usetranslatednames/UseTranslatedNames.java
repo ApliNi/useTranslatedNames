@@ -110,9 +110,25 @@ public final class UseTranslatedNames extends JavaPlugin implements CommandExecu
                 // 获取消息 JSON
                 String json = serializationJson(switch(parser){
                     // 1.20.4 +
-                    case ChatComponents -> event.getPacket().getChatComponents().readSafely(0).getJson();
+                    case ChatComponents -> {
+                        try {
+                            // 根据反馈一些服务器上偶尔出现此错误, 似乎不是严重的问题, 不影响运行:
+                            // [Error] Unhandled exception number 64 occurred in onPacketSending(PacketEvent) for UseTranslatedNames
+                            yield event.getPacket().getChatComponents().readSafely(0).getJson();
+                        } catch (Exception e){
+                            if(_debug >= 1) getLogger().info("[DEBUG] [Player: "+ player.getName() +"] Error: "+ e.getMessage());
+                            yield null;
+                        }
+                    }
                     // 1.20.4 -
-                    case GetStrings -> event.getPacket().getStrings().readSafely(0);
+                    case GetStrings -> {
+                        try {
+                            yield event.getPacket().getStrings().readSafely(0);
+                        } catch (Exception e){
+                            if(_debug >= 1) getLogger().info("[DEBUG] [Player: "+ player.getName() +"] Error: "+ e.getMessage());
+                            yield null;
+                        }
+                    }
                     //
                     default -> null;
                 });
